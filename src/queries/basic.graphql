@@ -1,0 +1,30 @@
+query ExampleQuery {
+  userSettings {
+    id
+  }
+  viewer {
+    id
+    name
+  }
+  templates {
+    id
+  }
+  issues(filter: {assignee:  {
+     isMe: {
+      eq: true
+     }
+  }}) {
+    nodes {
+      title
+      branchName
+    }
+  }
+  teams {
+    edges {
+      node {
+        name
+        
+      }
+    }
+  }
+}
