@@ -1,30 +1,50 @@
-query ExampleQuery {
-  userSettings {
-    id
-  }
-  viewer {
-    id
-    name
-  }
-  templates {
-    id
-  }
-  issues(filter: {assignee:  {
-     isMe: {
-      eq: true
-     }
-  }}) {
+query MyIssuesQuery {
+    issues(
+      filter: {
+        assignee: { isMe: { eq: true } }
+        state: { type: { in: ["started", "backlog", "unstarted"] } }
+      },
+      sort: {
+        createdAt:  {
+           order: Descending
+        }
+    }
+  ) {
     nodes {
       title
-      branchName
-    }
-  }
-  teams {
-    edges {
-      node {
+      identifier
+      state {
         name
-        
+        color
       }
+      url
+      assignee {
+        isMe
+        displayName
+      }
+      creator {
+        isMe
+        displayName
+      }
+      estimate
+      project {
+        name
+        icon
+        color
+      }
+      createdAt
+      priorityLabel
+      priority
+      labels {
+        edges {
+          node {
+            color
+            name
+          }
+        }
+      }
+      branchName
+      description
     }
   }
 }
