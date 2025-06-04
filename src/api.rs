@@ -12,7 +12,7 @@ impl LinearClient {
     pub fn new(api_key: String) -> Result<Self, Box<dyn Error>> {
         let endpoint = String::from("https://api.linear.app/graphql");
         let client = Client::builder()
-            .user_agent("graphql-rust/0.10.0")
+            .user_agent("lt/0.0.1")
             .default_headers(
                 std::iter::once((
                     reqwest::header::AUTHORIZATION,
@@ -32,7 +32,15 @@ impl LinearClient {
         let var = T::build_query(variables);
         let res = self.client.post(&self.endpoint).json(&var).send().await?;
         let response_body: Response<T::ResponseData> = res.json().await?;
-        Ok(response_body.data.unwrap())
+        match response_body.data {
+            Some(t) => Ok(t),
+            None => {
+                match response_body.errors {
+                    None => Err("No idea what happened".into()),
+                    Some(e) => Err(e[0].message.clone().into())
+                }
+            }
+        }
     }
 }
 

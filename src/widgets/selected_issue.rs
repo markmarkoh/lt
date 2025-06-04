@@ -1,4 +1,3 @@
-use crate::LoadingState;
 use crate::LtEvent;
 use crate::iconmap;
 use crate::queries;
@@ -29,7 +28,6 @@ use ratatui::{
 
 #[derive(Debug, Default)]
 struct SelectedIssueWidgetState {
-    loading_state: LoadingState,
     selected_issue: Option<my_issues_query::MyIssuesQueryIssuesNodes>,
 }
 

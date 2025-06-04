@@ -4,9 +4,9 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Modifier, Style, Stylize, palette::tailwind::SLATE},
+    style::{palette::tailwind::SLATE, Modifier, Style, Stylize},
     text::{Line, Span, Text},
-    widgets::{Block, List, ListItem, ListState, StatefulWidget, Widget},
+    widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
 };
 
 use crate::{
@@ -42,8 +42,11 @@ impl MyIssuesWidget {
                 self.state.write().unwrap().issues = data.issues;
                 // TODO: Add cacheing implementation
                 //println!("{:#?}", serde_json::to_string(&self.state.read().unwrap().issues).unwrap());
-            },
-            Err(_) => println!("Oh no"),
+            }
+            Err(e) => {
+                self.set_loading_state(LoadingState::Error(e.to_string()));
+                return;
+            }
         }
         self.set_loading_state(LoadingState::Loaded);
     }
@@ -135,13 +138,25 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c50).add_modifier(Modifier::
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let mut state = self.state.write().unwrap();
+        //println!("NOT HER");
         let block = Block::bordered()
             .title("My Issues")
             .title_bottom(Line::from(vec![
                 Span::from(" <j/k> ").blue(),
                 Span::from("to scroll "),
             ]));
+
+        if let LoadingState::Error(e) = self.get_loading_state() {
+            let p = Paragraph::new(vec![
+                Line::from("Error:\n\n".red().bold()),
+                Line::from(e.red().bold().underlined())
+            ])
+            .wrap(Wrap { trim: true })
+            .block(block);
+            p.render(area, buf);
+            return;
+        }
+        let mut state = self.state.write().unwrap();
         let rows = state.issues.nodes.iter().map(|item| {
             let mut text = Text::default();
             text.extend([
