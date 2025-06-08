@@ -4,18 +4,17 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Modifier, Style, Stylize, palette::tailwind::SLATE},
+    style::{
+        palette::{material::{AMBER, BLUE, BLUE_GRAY, ORANGE, WHITE}, tailwind::SLATE}, Modifier, Style, Stylize
+    },
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
 };
 
 use crate::{
-    LTWidget, LoadingState, LtEvent,
-    api::LinearClient,
-    queries::{
-        MyIssuesQuery,
-        my_issues_query::{self, MyIssuesQueryIssues},
-    },
+    api::LinearClient, iconmap, queries::{
+        my_issues_query::{self, MyIssuesQueryIssues}, MyIssuesQuery
+    }, LTWidget, LoadingState, LtEvent
 };
 
 #[derive(Debug, Default)]
@@ -137,7 +136,10 @@ impl LTWidget for MyIssuesWidget {
         LtEvent::None
     }
 }
-const SELECTED_STYLE: Style = Style::new().bg(SLATE.c50).add_modifier(Modifier::BOLD);
+const SELECTED_STYLE: Style = Style::new()
+    .bg(SLATE.c100)
+    .fg(BLUE_GRAY.c900);
+    //.add_modifier(Modifier::BOLD);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -164,11 +166,18 @@ impl Widget for &MyIssuesWidget {
             return;
         }
         let mut state = self.state.write().unwrap();
+        let area_width = area.width;
         let rows = state.issues.nodes.iter().map(|item| {
             let mut text = Text::default();
+            let priority_icon = iconmap::p_to_nf(item.priority);
+            let status_icon = iconmap::state_to_nf(&item.state.type_);
+            let identifier = item.identifier.clone();
+            // gives the effect of right aligning icons and left aligning the text
+            let spaces = (area_width as usize) - identifier.len() - 7;
+            let line = format!("{}{}{} {}", identifier.fg(AMBER.c700), " ".repeat(spaces), status_icon, priority_icon);
             text.extend([
                 item.title.clone().white(),
-                item.identifier.clone().blue().add_modifier(Modifier::BOLD),
+                line.add_modifier(Modifier::BOLD).blue(),
             ]);
             ListItem::new(text)
         });

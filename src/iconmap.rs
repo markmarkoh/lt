@@ -246,11 +246,11 @@ pub fn ico_to_nf(name: &str) -> String {
 
 pub fn p_to_nf(priority: f64) -> String {
     let nf = match priority {
-        1.0 => "",
-        2.0 => "󰕾",
-        3.0 => "󰖀",
-        4.0 => "󰕿",
-        _ => "󰸈",
+        1.0 => " ",
+        2.0 => " ",
+        3.0 => " ",
+        4.0 => " ",
+        _ => " ",
     };
     nf.to_string()
 }
