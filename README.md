@@ -19,6 +19,8 @@
 **Requirements**:
 * Modern terminal like kitty, Ghostty, iTerm2
 * A Nerdfont installed
+* A `LINEAR_API_TOKEN` environment variable
+   * [Generate API token here](https://linear.app/settings/account/security)
 
 **TBD instructions via brew? or other package managers?**
 
