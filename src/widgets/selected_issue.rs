@@ -233,11 +233,11 @@ impl Widget for &SelectedIssueWidget {
             .title_bottom(Line::from(vec![
                 Span::from("──"),
                 Span::from(" <y> ").blue(),
-                Span::from("to yank (copy) git branch "),
+                Span::from("to yank git branch "),
             ]))
             .title_bottom(Line::from(vec![
                 Span::from(" <o> ").blue(),
-                Span::from("to open issue in Linear"),
+                Span::from("to open in Linear"),
             ]))
             .title(identifier)
             .title(title_text);
