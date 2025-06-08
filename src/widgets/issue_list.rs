@@ -71,11 +71,16 @@ impl MyIssuesWidget {
 
     pub fn scroll_up(&self) {
         let mut state = self.state.write().unwrap();
-        if let Some(0) = state.list_state.selected() {
-            let max_index = state.issues.nodes.len() - 1;
-            return state.list_state.select(Some(max_index));
-        };
-        state.list_state.select_previous()
+
+        match state.list_state.selected() {
+            Some(0) | None => {
+                let max_index = state.issues.nodes.len() - 1;
+                state.list_state.select(Some(max_index));
+            }
+            _ => {
+                state.list_state.select_previous()
+            }
+        }
     }
 
     pub fn copy_branch_name(&self) {
@@ -121,7 +126,7 @@ impl LTWidget for MyIssuesWidget {
                         let _ = self.open_url();
                         return LtEvent::None;
                     }
-                    KeyCode::Char('c') => {
+                    KeyCode::Char('c') | KeyCode::Char('y') => {
                         self.copy_branch_name();
                         return LtEvent::None;
                     }
@@ -143,7 +148,7 @@ impl Widget for &MyIssuesWidget {
             .title("My Issues")
             .title_bottom(Line::from(vec![
                 Span::from(" <j/k> ").blue(),
-                Span::from("to scroll "),
+                Span::from("to change issue "),
             ]));
 
         if let LoadingState::Error(e) = self.get_loading_state() {

@@ -220,8 +220,8 @@ impl Widget for &SelectedIssueWidget {
             .borders(Borders::TOP | Borders::LEFT | Borders::BOTTOM)
             .title_bottom(Line::from(vec![
                 Span::from("──"),
-                Span::from(" <c> ").blue(),
-                Span::from("to copy git branch "),
+                Span::from(" <y> ").blue(),
+                Span::from("to yank (copy) git branch "),
             ]))
             .title_bottom(Line::from(vec![
                 Span::from(" <o> ").blue(),
