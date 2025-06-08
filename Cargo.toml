@@ -1,7 +1,14 @@
 [package]
 name = "lt"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
+description = "A TUI application to view & interact with Linear.app issues"
+authors = ["Mark Di Marco <mark.dimarco@gmail.com>"]
+keywords = ["linear", "tui", "issues"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/markmarkoh/lt"
+repository = "https://github.com/markmarkoh/lt"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0.98"
