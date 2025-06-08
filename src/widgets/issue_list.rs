@@ -4,7 +4,7 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{palette::tailwind::SLATE, Modifier, Style, Stylize},
+    style::{Modifier, Style, Stylize, palette::tailwind::SLATE},
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
 };
@@ -77,9 +77,7 @@ impl MyIssuesWidget {
                 let max_index = state.issues.nodes.len() - 1;
                 state.list_state.select(Some(max_index));
             }
-            _ => {
-                state.list_state.select_previous()
-            }
+            _ => state.list_state.select_previous(),
         }
     }
 
@@ -144,17 +142,21 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c50).add_modifier(Modifier::
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         //println!("NOT HER");
-        let block = Block::bordered()
+        let mut block = Block::bordered()
             .title("My Issues")
             .title_bottom(Line::from(vec![
                 Span::from(" <j/k> ").blue(),
-                Span::from("to change issue "),
+                Span::from("to select issue "),
             ]));
+
+        if let LoadingState::Loading = self.get_loading_state() {
+            block = block.title(Line::from("Loading…").right_aligned());
+        }
 
         if let LoadingState::Error(e) = self.get_loading_state() {
             let p = Paragraph::new(vec![
                 Line::from("Error:\n\n".red().bold()),
-                Line::from(e.red().bold().underlined())
+                Line::from(e.red().bold().underlined()),
             ])
             .wrap(Wrap { trim: true })
             .block(block);
