@@ -16,6 +16,7 @@ query MyIssuesQuery {
       state {
         name
         color
+        type
       }
       url
       assignee {

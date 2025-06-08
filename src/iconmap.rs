@@ -254,3 +254,16 @@ pub fn p_to_nf(priority: f64) -> String {
     };
     nf.to_string()
 }
+
+pub fn state_to_nf(state: &str) -> String {
+    let nf = match state {
+        "triage" => "󰿡 ",
+        "backlog" => "󱥸 ",
+        "unstarted" => " ",
+        "started" => " ",
+        "completed" => " ",
+        "cancelled" => " ",
+        _ => "",
+    };
+    nf.to_string()
+}

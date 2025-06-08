@@ -107,13 +107,15 @@ impl Widget for &SelectedIssueWidget {
                     }
                     if !issue.state.name.is_empty() {
                         sidebar_items.push(Line::from(Span::from("Status: ".to_string())));
-                        sidebar_items.push(Line::from(
+                        let state_icon = iconmap::state_to_nf(&issue.state.type_).fg(Color::from_str(&issue.state.color).unwrap());
+                        sidebar_items.push(Line::from(vec![
+                            state_icon.fg(Color::from_str(&issue.state.color).unwrap()),
                             issue
                                 .state
                                 .name
                                 .clone()
                                 .fg(Color::from_str(&issue.state.color).unwrap()),
-                        ));
+                        ]));
                         sidebar_items.push(Line::from(""));
                     }
 
