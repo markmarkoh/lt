@@ -5,7 +5,7 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::{
-        palette::{material::{AMBER, BLUE, BLUE_GRAY, ORANGE, WHITE}, tailwind::SLATE}, Modifier, Style, Stylize
+        palette::{material::{AMBER, BLUE_GRAY}, tailwind::SLATE}, Modifier, Style, Stylize
     },
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
@@ -173,8 +173,8 @@ impl Widget for &MyIssuesWidget {
             let status_icon = iconmap::state_to_nf(&item.state.type_);
             let identifier = item.identifier.clone();
             // gives the effect of right aligning icons and left aligning the text
-            let spaces = (area_width as usize) - identifier.len() - 7;
-            let line = format!("{}{}{} {}", identifier.fg(AMBER.c700), " ".repeat(spaces), status_icon, priority_icon);
+            let spaces = (area_width as usize) - identifier.len() - 8;
+            let line = format!("{}{}{}  {}", identifier.fg(AMBER.c700), " ".repeat(spaces), status_icon, priority_icon);
             text.extend([
                 item.title.clone().white(),
                 line.add_modifier(Modifier::BOLD).blue(),

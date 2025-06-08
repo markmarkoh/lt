@@ -5,6 +5,8 @@ use crate::queries;
 use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEventKind;
+use ratatui::style::Style;
+use ratatui::style::palette::tailwind::SLATE;
 use ratatui::text::Text;
 use ratatui::widgets::Scrollbar;
 use ratatui::widgets::ScrollbarOrientation;
@@ -67,6 +69,12 @@ impl SelectedIssueWidget {
     }
 }
 
+const DICT_HEADER: Style = Style::new().fg(SLATE.c100);
+
+fn header(text: &str) -> Line {
+    Line::from(Span::from(text.to_owned() + ":\n")).style(DICT_HEADER)
+}
+
 impl Widget for &SelectedIssueWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let state = self.state.read().unwrap();
@@ -96,7 +104,7 @@ impl Widget for &SelectedIssueWidget {
                     let mut sidebar_items = vec![];
 
                     if !issue.priority_label.is_empty() {
-                        sidebar_items.push(Line::from(Span::from("Priority:\n ".to_string())));
+                        sidebar_items.push(header("Priority"));
                         let priority_icon = iconmap::p_to_nf(issue.priority);
                         sidebar_items.push(Line::from(format!(
                             "{} {}",
@@ -106,8 +114,9 @@ impl Widget for &SelectedIssueWidget {
                         sidebar_items.push(Line::from(""));
                     }
                     if !issue.state.name.is_empty() {
-                        sidebar_items.push(Line::from(Span::from("Status: ".to_string())));
-                        let state_icon = iconmap::state_to_nf(&issue.state.type_).fg(Color::from_str(&issue.state.color).unwrap());
+                        sidebar_items.push(header("Status"));
+                        let state_icon = iconmap::state_to_nf(&issue.state.type_)
+                            .fg(Color::from_str(&issue.state.color).unwrap());
                         sidebar_items.push(Line::from(vec![
                             state_icon.fg(Color::from_str(&issue.state.color).unwrap()),
                             issue
@@ -124,7 +133,7 @@ impl Widget for &SelectedIssueWidget {
                         let project_icon =
                             iconmap::ico_to_nf(project.icon.as_ref().map_or("NN", |v| v))
                                 .fg(project_color);
-                        sidebar_items.push(Line::from(Span::from("Project: ".to_string())));
+                        sidebar_items.push(header("Project"));
                         sidebar_items.push(Line::from(vec![
                             project_icon,
                             project.name.clone().fg(project_color),
@@ -133,7 +142,7 @@ impl Widget for &SelectedIssueWidget {
                     }
 
                     if let Some(assignee) = &issue.assignee {
-                        sidebar_items.push(Line::from(Span::from("Assignee: ".to_string())));
+                        sidebar_items.push(header("Assignee"));
                         if assignee.is_me {
                             sidebar_items.push(Line::from("You"));
                         } else {
@@ -143,7 +152,7 @@ impl Widget for &SelectedIssueWidget {
                     }
 
                     if let Some(creator) = &issue.creator {
-                        sidebar_items.push(Line::from(Span::from("Creator: ".to_string())));
+                        sidebar_items.push(header("Creator"));
                         if creator.is_me {
                             sidebar_items.push(Line::from("You"));
                         } else {
@@ -153,7 +162,7 @@ impl Widget for &SelectedIssueWidget {
                     }
 
                     if !issue.labels.edges.is_empty() {
-                        sidebar_items.push(Line::from(Span::from("Tags: ".to_string())));
+                        sidebar_items.push(header("Tags"));
                         sidebar_items.push(Line::from(
                             issue
                                 .labels
@@ -184,7 +193,7 @@ impl Widget for &SelectedIssueWidget {
                 ),
             };
 
-        let created_at_title = Line::from(created_at).right_aligned();
+        let created_at_title = Line::from(created_at).fg(SLATE.c100).right_aligned();
 
         // collapse borders for nicer UI
         let collapsed_top_and_left_border_set = symbols::border::Set {
@@ -220,6 +229,7 @@ impl Widget for &SelectedIssueWidget {
 
         let mut block = Block::new()
             .borders(Borders::TOP | Borders::LEFT | Borders::BOTTOM)
+            .border_style(DICT_HEADER)
             .title_bottom(Line::from(vec![
                 Span::from("──"),
                 Span::from(" <y> ").blue(),
