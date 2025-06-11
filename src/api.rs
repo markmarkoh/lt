@@ -11,8 +11,10 @@ pub struct LinearClient {
 impl LinearClient {
     pub fn new(api_key: String) -> Result<Self, Box<dyn Error>> {
         let endpoint = String::from("https://api.linear.app/graphql");
+
+        let pkgver = env!("CARGO_PKG_VERSION");
         let client = Client::builder()
-            .user_agent("lt/0.0.1")
+            .user_agent(format!("lt/{}", pkgver))
             .default_headers(
                 std::iter::once((
                     reqwest::header::AUTHORIZATION,
