@@ -1,5 +1,3 @@
-use ratatui::{style::Color, text::Span};
-
 // linear icon name to nerdfont icon
 pub fn ico_to_nf(name: &str) -> String {
     let nf = match name {

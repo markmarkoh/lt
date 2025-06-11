@@ -82,14 +82,20 @@ impl MyIssuesWidget {
 
     pub fn copy_branch_name(&self) {
         let state = self.state.read().unwrap();
-        let selected_issue = &state.issues.nodes[state.list_state.selected().unwrap()];
-        cli_clipboard::set_contents(selected_issue.branch_name.clone()).unwrap();
+        if let Some(index) = state.list_state.selected() {
+            let selected_issue = &state.issues.nodes[index];
+            cli_clipboard::set_contents(selected_issue.branch_name.clone()).unwrap();
+        }
     }
 
     pub fn open_url(&self) -> std::result::Result<(), std::io::Error> {
         let state = self.state.read().unwrap();
-        let selected_issue = &state.issues.nodes[state.list_state.selected().unwrap()];
-        open::that(&selected_issue.url)
+        if let Some(index) = state.list_state.selected() {
+            let selected_issue = &state.issues.nodes[index];
+            open::that(&selected_issue.url)
+        } else {
+            Ok(())
+        }
     }
 }
 

@@ -51,7 +51,7 @@ struct App {
 }
 
 impl App {
-    const FRAMES_PER_SECOND: f32 = 5.0;
+    const FRAMES_PER_SECOND: f32 = 30.0;
 
     pub fn new() -> Self {
         Self {
