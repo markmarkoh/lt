@@ -1,3 +1,5 @@
+use ratatui::{style::Color, text::Span};
+
 // linear icon name to nerdfont icon
 pub fn ico_to_nf(name: &str) -> String {
     let nf = match name {
@@ -239,18 +241,18 @@ pub fn ico_to_nf(name: &str) -> String {
         "Slack" => " ",
         "Zapier" => " ",
         "Zendesk" => "󰬡 ",
-        _ => "idk",
+        _ => "",
     };
     nf.to_string()
 }
 
 pub fn p_to_nf(priority: f64) -> String {
     let nf = match priority {
-        1.0 => " ",
-        2.0 => " ",
-        3.0 => " ",
-        4.0 => " ",
-        _ => " ",
+        1.0 => "󰀧  ",
+        2.0 => "  ",
+        3.0 => "  ",
+        4.0 => "  ",
+        _ => "  ",
     };
     nf.to_string()
 }

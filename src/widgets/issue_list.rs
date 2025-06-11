@@ -139,11 +139,9 @@ impl LTWidget for MyIssuesWidget {
 const SELECTED_STYLE: Style = Style::new()
     .bg(SLATE.c100)
     .fg(BLUE_GRAY.c900);
-    //.add_modifier(Modifier::BOLD);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        //println!("NOT HER");
         let mut block = Block::bordered()
             .title("My Issues")
             .title_bottom(Line::from(vec![

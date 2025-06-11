@@ -5,6 +5,7 @@ use crate::queries;
 use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEventKind;
+use ratatui::style::Modifier;
 use ratatui::style::Style;
 use ratatui::style::palette::tailwind::SLATE;
 use ratatui::text::Text;
@@ -52,9 +53,7 @@ impl SelectedIssueWidget {
             if key.kind == KeyEventKind::Press {
                 match key.code {
                     KeyCode::Down => {
-                        //self.state.write().unwrap().scroll = self.state.read().unwrap().scroll.saturating_add(1);
                         self.scroll = self.scroll.saturating_add(1);
-                        //self.state.write().unwrap().scroll_state.next();
                         self.scroll_state.next();
                     }
                     KeyCode::Up => {
@@ -106,11 +105,10 @@ impl Widget for &SelectedIssueWidget {
                     if !issue.priority_label.is_empty() {
                         sidebar_items.push(header("Priority"));
                         let priority_icon = iconmap::p_to_nf(issue.priority);
-                        sidebar_items.push(Line::from(format!(
-                            "{} {}",
-                            priority_icon,
-                            issue.priority_label.clone().blue()
-                        )));
+                        sidebar_items.push(Line::from(vec![
+                            priority_icon.add_modifier(Modifier::BOLD),
+                            issue.priority_label.clone().into()
+                        ]));
                         sidebar_items.push(Line::from(""));
                     }
                     if !issue.state.name.is_empty() {
@@ -119,6 +117,7 @@ impl Widget for &SelectedIssueWidget {
                             .fg(Color::from_str(&issue.state.color).unwrap());
                         sidebar_items.push(Line::from(vec![
                             state_icon.fg(Color::from_str(&issue.state.color).unwrap()),
+                            " ".into(),
                             issue
                                 .state
                                 .name
@@ -169,7 +168,7 @@ impl Widget for &SelectedIssueWidget {
                                 .edges
                                 .iter()
                                 .map(|value| {
-                                    Span::from(format!(" {} ", value.node.name.clone()))
+                                    Span::from(format!("• {} ", value.node.name.clone()))
                                         .fg(Color::from_str(&value.node.color).unwrap())
                                 })
                                 .collect::<Vec<Span>>(),
