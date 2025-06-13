@@ -1,0 +1,24 @@
+---
+source: src/widgets/selected_issue.rs
+expression: terminal.backend()
+---
+"┌TEST-1────────────────Testing Ticket───────────────────────┬────────05/10/2025┐"
+"│### Title                                                  │Priority:         │"
+"│                                                           │󰀧  Urgent         │"
+"│Multi                                                      │                  │"
+"│Line description                                           │Status:           │"
+"│                                                           │󱥸  Backlogged     │"
+"│                                                           │                  │"
+"│                                                           │Project:          │"
+"│                                                           │ Test Project    │"
+"│                                                           │                  │"
+"│                                                           │Assignee:         │"
+"│                                                           │Assignee Display  │"
+"│                                                           │Name              │"
+"│                                                           │                  │"
+"│                                                           │Creator:          │"
+"│                                                           │You               │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"└── <y> to yank git branch ─ <o> to open in Linear──────────┴── <q> to quit ───┘"

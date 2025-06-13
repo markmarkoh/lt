@@ -1,0 +1,24 @@
+---
+source: src/widgets/selected_issue.rs
+expression: terminal.backend()
+---
+"┌─Select an issue to see some details───────────────────────┬──────────────────┐"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"│                                                           │                  │"
+"└── <y> to yank git branch ─ <o> to open in Linear──────────┴── <q> to quit ───┘"

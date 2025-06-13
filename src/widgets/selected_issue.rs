@@ -107,7 +107,7 @@ impl Widget for &SelectedIssueWidget {
                         let priority_icon = iconmap::p_to_nf(issue.priority);
                         sidebar_items.push(Line::from(vec![
                             priority_icon.add_modifier(Modifier::BOLD),
-                            issue.priority_label.clone().into()
+                            issue.priority_label.clone().into(),
                         ]));
                         sidebar_items.push(Line::from(""));
                     }
@@ -275,5 +275,64 @@ impl Widget for &SelectedIssueWidget {
         //Clear.render(main, buf);
         p.render(main, buf);
         sidebar_p.render(sidebar, buf);
+    }
+}
+
+// Now in tests module:
+#[cfg(test)]
+mod tests {
+    use crate::queries::my_issues_query;
+    use insta::assert_snapshot;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    use crate::widgets::SelectedIssueWidget;
+
+    #[test]
+    fn test_empty_state() {
+        let app = SelectedIssueWidget::default();
+        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+        assert_snapshot!(terminal.backend());
+    }
+
+    #[test]
+    fn test_basic_issue() {
+        let mut app = SelectedIssueWidget::default();
+        let issue = my_issues_query::MyIssuesQueryIssuesNodes {
+            priority: 1.0,
+            priority_label: "Urgent".into(),
+            identifier: String::from("TEST-1"),
+            title: String::from("Testing Ticket"),
+            created_at: String::from("2025-05-10T03:09:51.740Z"),
+            project: Some(my_issues_query::MyIssuesQueryIssuesNodesProject {
+                name: "Test Project".into(),
+                icon: Some("Subgroup".into()),
+                color: "#FA0FA0".into(),
+            }),
+            creator: Some(my_issues_query::MyIssuesQueryIssuesNodesCreator {
+                is_me: true,
+                display_name: "Creator Display Name".into(),
+            }),
+            assignee: Some(my_issues_query::MyIssuesQueryIssuesNodesAssignee {
+                is_me: false,
+                display_name: "Assignee Display Name".into(),
+            }),
+            state: my_issues_query::MyIssuesQueryIssuesNodesState {
+                name: "Backlogged".into(),
+                color: "#0FA0FA".into(),
+                type_: "backlog".into(),
+            },
+            description: Some(String::from("### Title\n\nMulti\nLine **description**")),
+            ..Default::default()
+        };
+        app.set_selected_issue(Some(issue));
+
+        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+        assert_snapshot!(terminal.backend());
     }
 }
