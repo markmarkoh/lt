@@ -210,7 +210,6 @@ impl Widget for &MyIssuesWidget {
     }
 }
 
-// Now in tests module:
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, RwLock};
@@ -289,9 +288,8 @@ mod tests {
         app.handle_event(&create_key_event('k'));
         assert_eq!(app.state.read().unwrap().list_state.selected(), Some(1));
 
-        // test that is passes backwards to 1
-        app.handle_event(&create_key_event('c'));
-        
+        // test that <y> yanks the branch name to the clipboard
+        app.handle_event(&create_key_event('y'));
         assert_eq!(cli_clipboard::get_contents().unwrap(), "test-1-branch-name");
 
     }

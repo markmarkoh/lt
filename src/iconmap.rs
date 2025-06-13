@@ -267,3 +267,20 @@ pub fn state_to_nf(state: &str) -> String {
     };
     nf.to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::iconmap::{ico_to_nf, p_to_nf, state_to_nf};
+
+    #[test]
+    fn test_transitions() {
+        assert_eq!( ico_to_nf("Umbrella"), "  ".to_string());
+        assert_eq!( state_to_nf("triage"), "󰿡 ".to_string());
+        assert_eq!( p_to_nf(3.0), "  ".to_string());
+
+        assert_eq!( ico_to_nf("asdfa"), "");
+        assert_eq!( p_to_nf(202.0), "  ");
+        assert_eq!( state_to_nf("unknown"), "");
+    }
+
+}
