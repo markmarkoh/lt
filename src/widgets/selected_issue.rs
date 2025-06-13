@@ -280,31 +280,20 @@ impl Widget for &SelectedIssueWidget {
 
 // Now in tests module:
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use crate::queries::my_issues_query;
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend};
 
     use crate::widgets::SelectedIssueWidget;
 
-    #[test]
-    fn test_empty_state() {
-        let app = SelectedIssueWidget::default();
-        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
-        terminal
-            .draw(|frame| frame.render_widget(&app, frame.area()))
-            .unwrap();
-        assert_snapshot!(terminal.backend());
-    }
-
-    #[test]
-    fn test_basic_issue() {
-        let mut app = SelectedIssueWidget::default();
-        let issue = my_issues_query::MyIssuesQueryIssuesNodes {
+    pub fn make_issue(title: &str, identifier: &str) -> my_issues_query::MyIssuesQueryIssuesNodes {
+        my_issues_query::MyIssuesQueryIssuesNodes {
             priority: 1.0,
             priority_label: "Urgent".into(),
-            identifier: String::from("TEST-1"),
-            title: String::from("Testing Ticket"),
+            branch_name: "test-1-branch-name".into(),
+            identifier: String::from(identifier),
+            title: String::from(title),
             created_at: String::from("2025-05-10T03:09:51.740Z"),
             project: Some(my_issues_query::MyIssuesQueryIssuesNodesProject {
                 name: "Test Project".into(),
@@ -326,7 +315,24 @@ mod tests {
             },
             description: Some(String::from("### Title\n\nMulti\nLine **description**")),
             ..Default::default()
-        };
+        }
+    }
+
+    #[test]
+    fn test_empty_state() {
+        let app = SelectedIssueWidget::default();
+        let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+        assert_snapshot!(terminal.backend());
+    }
+
+    #[test]
+    fn test_basic_issue() {
+        let mut app = SelectedIssueWidget::default();
+        let issue = make_issue("Testing Ticket", "TEST-1");
+
         app.set_selected_issue(Some(issue));
 
         let mut terminal = Terminal::new(TestBackend::new(80, 20)).unwrap();

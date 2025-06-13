@@ -5,16 +5,24 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::{
-        palette::{material::{AMBER, BLUE_GRAY}, tailwind::SLATE}, Modifier, Style, Stylize
+        Modifier, Style, Stylize,
+        palette::{
+            material::{AMBER, BLUE_GRAY},
+            tailwind::SLATE,
+        },
     },
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
 };
 
 use crate::{
-    api::LinearClient, iconmap, queries::{
-        my_issues_query::{self, MyIssuesQueryIssues}, MyIssuesQuery
-    }, LTWidget, LoadingState, LtEvent
+    LTWidget, LoadingState, LtEvent,
+    api::LinearClient,
+    iconmap,
+    queries::{
+        MyIssuesQuery,
+        my_issues_query::{self, MyIssuesQueryIssues},
+    },
 };
 
 #[derive(Debug, Default)]
@@ -142,9 +150,7 @@ impl LTWidget for MyIssuesWidget {
         LtEvent::None
     }
 }
-const SELECTED_STYLE: Style = Style::new()
-    .bg(SLATE.c100)
-    .fg(BLUE_GRAY.c900);
+const SELECTED_STYLE: Style = Style::new().bg(SLATE.c100).fg(BLUE_GRAY.c900);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -178,7 +184,13 @@ impl Widget for &MyIssuesWidget {
             let identifier = item.identifier.clone();
             // gives the effect of right aligning icons and left aligning the text
             let spaces = (area_width as usize) - identifier.len() - 8;
-            let line = format!("{}{}{}  {}", identifier.fg(AMBER.c700), " ".repeat(spaces), status_icon, priority_icon);
+            let line = format!(
+                "{}{}{}  {}",
+                identifier.fg(AMBER.c700),
+                " ".repeat(spaces),
+                status_icon,
+                priority_icon
+            );
             text.extend([
                 item.title.clone().white(),
                 line.add_modifier(Modifier::BOLD).blue(),
@@ -186,7 +198,101 @@ impl Widget for &MyIssuesWidget {
             ListItem::new(text)
         });
 
-        let list = List::new(rows).highlight_style(SELECTED_STYLE).block(block);
+        // tests can't see the highlighting
+        let highlight_symbol = if cfg!(test) {
+            ">"
+        } else {
+            ""
+        };
+
+        let list = List::new(rows).highlight_style(SELECTED_STYLE).highlight_symbol(highlight_symbol).block(block);
         StatefulWidget::render(list, area, buf, &mut state.list_state);
+    }
+}
+
+// Now in tests module:
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, RwLock};
+
+    use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
+    use insta::assert_snapshot;
+    use ratatui::{Terminal, backend::TestBackend, widgets::ListState};
+
+    use crate::{
+        LTWidget, LtEvent, queries,
+        widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
+    };
+
+    fn create_key_event(key: char) -> crossterm::event::Event {
+        crossterm::event::Event::Key(crossterm::event::KeyEvent {
+            code: KeyCode::Char(key),
+            kind: KeyEventKind::Press,
+            modifiers: KeyModifiers::empty(),
+            state: KeyEventState::empty(),
+        })
+    }
+
+    #[test]
+    fn test_empty_state() {
+        let app = MyIssuesWidget::default();
+        let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        assert_snapshot!(terminal.backend());
+
+        let ev = app.handle_event(&create_key_event('j'));
+        assert_eq!(ev, LtEvent::None);
+    }
+
+    #[test]
+    fn test_with_issues() {
+        let issues = vec![
+            make_issue("Ticket One", "TEST-1"),
+            make_issue("Ticket Two", "TEST-2"),
+        ];
+        let app = MyIssuesWidget {
+            state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
+                loading_state: crate::LoadingState::Loaded,
+                list_state: ListState::default(),
+                issues: queries::my_issues_query::MyIssuesQueryIssues { nodes: issues },
+            })),
+        };
+        let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        assert_snapshot!(terminal.backend());
+
+        assert_eq!(app.state.read().unwrap().list_state.selected(), None);
+
+        let ev = app.handle_event(&create_key_event('j'));
+        assert_eq!(ev, LtEvent::SelectIssue);
+        assert_eq!(app.state.read().unwrap().list_state.selected(), Some(0));
+
+        app.handle_event(&create_key_event('j'));
+        assert_eq!(app.state.read().unwrap().list_state.selected(), Some(1));
+
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        assert_snapshot!(terminal.backend());
+        // test that is passes through back to 0
+        app.handle_event(&create_key_event('j'));
+        assert_eq!(app.state.read().unwrap().list_state.selected(), Some(0));
+
+        // test that is passes backwards to 1
+        app.handle_event(&create_key_event('k'));
+        assert_eq!(app.state.read().unwrap().list_state.selected(), Some(1));
+
+        // test that is passes backwards to 1
+        app.handle_event(&create_key_event('c'));
+        
+        assert_eq!(cli_clipboard::get_contents().unwrap(), "test-1-branch-name");
+
     }
 }

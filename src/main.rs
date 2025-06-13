@@ -38,6 +38,7 @@ pub trait LTWidget {
     fn handle_event(&self, event: &Event) -> LtEvent;
 }
 
+#[derive(Debug, PartialEq)]
 pub enum LtEvent {
     None,
     SelectIssue,
