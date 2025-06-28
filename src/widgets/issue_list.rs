@@ -47,8 +47,6 @@ impl MyIssuesWidget {
         match client.query(MyIssuesQuery, variables).await {
             Ok(data) => {
                 self.state.write().unwrap().issues = data.issues.nodes.iter().map(|issue| issue.to_owned().into()).collect();
-                // TODO: Add cacheing implementation
-                //println!("{:#?}", serde_json::to_string(&self.state.read().unwrap().issues).unwrap());
             }
             Err(e) => {
                 self.set_loading_state(LoadingState::Error(e.to_string()));

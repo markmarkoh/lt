@@ -155,7 +155,7 @@ pub struct IssueFragment {
 
 impl From<my_issues_query::IssueFragment> for IssueFragment {
     fn from(item: my_issues_query::IssueFragment) -> Self {
-        let issue_fragment = Self {
+        Self {
             title: item.title,
             identifier: item.identifier,
             url: item.url,
@@ -167,20 +167,10 @@ impl From<my_issues_query::IssueFragment> for IssueFragment {
             branch_name: item.branch_name,
             description: item.description,
             labels: item.labels.into(),
-            assignee: match item.assignee {
-                Some(assignee) => Some(assignee.into()),
-                _ => None,
-            },
-            creator: match item.creator {
-                Some(creator) => Some(creator.into()),
-                _ => None,
-            },
-            project: match item.project {
-                Some(project) => Some(project.into()),
-                _ => None,
-            },
-        };
-        return issue_fragment;
+            assignee: item.assignee.map(|assignee| assignee.into()),
+            creator: item.creator.map(|creator| creator.into()),
+            project: item.project.map(|project| project.into()),
+        }
     }
 }
 
