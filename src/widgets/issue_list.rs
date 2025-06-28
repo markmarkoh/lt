@@ -16,12 +16,12 @@ use ratatui::{
 };
 
 use crate::{
-    LTWidget, LoadingState, LtEvent,
+    LTWidget, LoadingState, LtEvent, IssueFragment,
     api::LinearClient,
     iconmap,
     queries::{
         MyIssuesQuery,
-        my_issues_query::{self, MyIssuesQueryIssues},
+        my_issues_query::{self},
     },
 };
 
@@ -29,7 +29,7 @@ use crate::{
 pub struct MyIssuesWidgetState {
     loading_state: LoadingState,
     pub list_state: ListState,
-    pub issues: MyIssuesQueryIssues,
+    pub issues: Vec<IssueFragment>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -46,7 +46,7 @@ impl MyIssuesWidget {
         let variables = my_issues_query::Variables {};
         match client.query(MyIssuesQuery, variables).await {
             Ok(data) => {
-                self.state.write().unwrap().issues = data.issues;
+                self.state.write().unwrap().issues = data.issues.nodes.iter().map(|issue| issue.to_owned().into()).collect();
                 // TODO: Add cacheing implementation
                 //println!("{:#?}", serde_json::to_string(&self.state.read().unwrap().issues).unwrap());
             }
@@ -69,7 +69,7 @@ impl MyIssuesWidget {
     pub fn scroll_down(&self) {
         let mut state = self.state.write().unwrap();
         if let Some(index) = state.list_state.selected() {
-            if index >= state.issues.nodes.len() - 1 {
+            if index >= state.issues.len() - 1 {
                 return state.list_state.select_first();
             }
         }
@@ -81,7 +81,7 @@ impl MyIssuesWidget {
 
         match state.list_state.selected() {
             Some(0) | None => {
-                let max_index = state.issues.nodes.len() - 1;
+                let max_index = state.issues.len() - 1;
                 state.list_state.select(Some(max_index));
             }
             _ => state.list_state.select_previous(),
@@ -91,7 +91,7 @@ impl MyIssuesWidget {
     pub fn copy_branch_name(&self) {
         let state = self.state.read().unwrap();
         if let Some(index) = state.list_state.selected() {
-            let selected_issue = &state.issues.nodes[index];
+            let selected_issue = &state.issues[index];
             cli_clipboard::set_contents(selected_issue.branch_name.clone()).unwrap();
         }
     }
@@ -99,7 +99,7 @@ impl MyIssuesWidget {
     pub fn open_url(&self) -> std::result::Result<(), std::io::Error> {
         let state = self.state.read().unwrap();
         if let Some(index) = state.list_state.selected() {
-            let selected_issue = &state.issues.nodes[index];
+            let selected_issue = &state.issues[index];
             open::that(&selected_issue.url)
         } else {
             Ok(())
@@ -177,7 +177,7 @@ impl Widget for &MyIssuesWidget {
         }
         let mut state = self.state.write().unwrap();
         let area_width = area.width;
-        let rows = state.issues.nodes.iter().map(|item| {
+        let rows = state.issues.iter().map(|item| {
             let mut text = Text::default();
             let priority_icon = iconmap::p_to_nf(item.priority);
             let status_icon = iconmap::state_to_nf(&item.state.type_);
@@ -256,7 +256,7 @@ mod tests {
             state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
                 loading_state: crate::LoadingState::Loaded,
                 list_state: ListState::default(),
-                issues: queries::my_issues_query::MyIssuesQueryIssues { nodes: issues },
+                issues
             })),
         };
         let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
