@@ -4,7 +4,7 @@ mod queries;
 mod widgets;
 
 use serde::{Deserialize, Serialize};
-use widgets::{MyIssuesWidget, SelectedIssueWidget};
+use widgets::{MyIssuesWidget, SelectedIssueWidget, TabWidget};
 
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use std::{
@@ -54,6 +54,7 @@ struct App {
     should_quit: bool,
     issue_list_widget: MyIssuesWidget,
     selected_issue_widget: SelectedIssueWidget,
+    tab_widget: TabWidget,
 }
 
 impl App {
@@ -64,6 +65,7 @@ impl App {
             should_quit: false,
             issue_list_widget: MyIssuesWidget::default(),
             selected_issue_widget: SelectedIssueWidget::default(),
+            tab_widget: TabWidget::default(),
         }
     }
 
@@ -85,10 +87,14 @@ impl App {
     }
 
     fn draw(&mut self, frame: &mut Frame) {
-        let vertical = Layout::horizontal([Constraint::Percentage(25), Constraint::Percentage(75)]);
-        let [list_area, body_area] = vertical.areas(frame.area());
+        use Constraint::{Length, Min, Percentage};
+        let vertical = Layout::vertical([Length(1), Min(0)]);
+        let [tab_area, body_area] = vertical.areas(frame.area());
+        let horizontal = Layout::horizontal([Percentage(25), Percentage(75)]);
+        let [list_area, body_area] = horizontal.areas(body_area);
         frame.render_widget(&self.issue_list_widget, list_area);
         frame.render_widget(&self.selected_issue_widget, body_area);
+        frame.render_widget(&self.tab_widget, tab_area);
     }
 
     fn handle_event(&mut self, event: &Event) {
@@ -97,7 +103,13 @@ impl App {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
                         self.should_quit = true;
-                    }
+                    },
+                    KeyCode::Tab => {
+                        self.tab_widget.next();
+                    },
+                    KeyCode::BackTab => {
+                        self.tab_widget.prev();
+                    },
                     _ => {
                         self.selected_issue_widget.handle_event(event);
                         if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
