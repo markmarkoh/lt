@@ -98,7 +98,7 @@ impl App {
                         if let LtEvent::SelectIssue = self.my_issues_widget.handle_event(event) {
                             let my_issues_widget_state =
                                 self.my_issues_widget.state.write().unwrap();
-                            let selected_issue: Option<my_issues_query::MyIssuesQueryIssuesNodes> =
+                            let selected_issue: Option<my_issues_query::IssueFragment> =
                                 my_issues_widget_state
                                     .list_state
                                     .selected()

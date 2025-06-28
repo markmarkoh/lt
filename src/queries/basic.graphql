@@ -1,16 +1,4 @@
-query MyIssuesQuery {
-    issues(
-      filter: {
-        assignee: { isMe: { eq: true } }
-        state: { type: { in: ["started", "backlog", "unstarted"] } }
-      },
-      sort: {
-        createdAt:  {
-           order: Descending
-        }
-    }
-  ) {
-    nodes {
+fragment IssueFragment on Issue {
       title
       identifier
       state {
@@ -46,6 +34,22 @@ query MyIssuesQuery {
       }
       branchName
       description
+}
+
+query MyIssuesQuery {
+    issues(
+      filter: {
+        assignee: { isMe: { eq: true } }
+        state: { type: { in: ["started", "backlog", "unstarted"] } }
+      },
+      sort: {
+        createdAt:  {
+           order: Descending
+        }
+    }
+  ) {
+    nodes {
+      ...IssueFragment
     }
   }
 }

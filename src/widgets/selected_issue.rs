@@ -31,7 +31,7 @@ use ratatui::{
 
 #[derive(Debug, Default)]
 struct SelectedIssueWidgetState {
-    selected_issue: Option<my_issues_query::MyIssuesQueryIssuesNodes>,
+    selected_issue: Option<my_issues_query::IssueFragment>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -42,7 +42,7 @@ pub struct SelectedIssueWidget {
 }
 
 impl SelectedIssueWidget {
-    pub fn set_selected_issue(&mut self, issue: Option<my_issues_query::MyIssuesQueryIssuesNodes>) {
+    pub fn set_selected_issue(&mut self, issue: Option<my_issues_query::IssueFragment>) {
         self.state.write().unwrap().selected_issue = issue;
         self.scroll = 0;
         self.scroll_state = ScrollbarState::default();
@@ -287,28 +287,28 @@ pub(crate) mod tests {
 
     use crate::widgets::SelectedIssueWidget;
 
-    pub fn make_issue(title: &str, identifier: &str) -> my_issues_query::MyIssuesQueryIssuesNodes {
-        my_issues_query::MyIssuesQueryIssuesNodes {
+    pub fn make_issue(title: &str, identifier: &str) -> my_issues_query::IssueFragment {
+        my_issues_query::IssueFragment {
             priority: 1.0,
             priority_label: "Urgent".into(),
             branch_name: "test-1-branch-name".into(),
             identifier: String::from(identifier),
             title: String::from(title),
             created_at: String::from("2025-05-10T03:09:51.740Z"),
-            project: Some(my_issues_query::MyIssuesQueryIssuesNodesProject {
+            project: Some(my_issues_query::IssueFragmentProject {
                 name: "Test Project".into(),
                 icon: Some("Subgroup".into()),
                 color: "#FA0FA0".into(),
             }),
-            creator: Some(my_issues_query::MyIssuesQueryIssuesNodesCreator {
+            creator: Some(my_issues_query::IssueFragmentCreator {
                 is_me: true,
                 display_name: "Creator Display Name".into(),
             }),
-            assignee: Some(my_issues_query::MyIssuesQueryIssuesNodesAssignee {
+            assignee: Some(my_issues_query::IssueFragmentAssignee {
                 is_me: false,
                 display_name: "Assignee Display Name".into(),
             }),
-            state: my_issues_query::MyIssuesQueryIssuesNodesState {
+            state: my_issues_query::IssueFragmentState {
                 name: "Backlogged".into(),
                 color: "#0FA0FA".into(),
                 type_: "backlog".into(),

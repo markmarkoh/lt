@@ -1,0 +1,9 @@
+query CustomViewsQuery {
+  customViews {
+    nodes {
+      name
+      slugId
+      id
+    }
+  }
+}
