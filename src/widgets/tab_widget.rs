@@ -1,19 +1,43 @@
 use ratatui::buffer::Buffer;
 use ratatui::{
-    layout::{Constraint, Layout, Rect},
-    style::{Color, Stylize},
-    symbols,
-    text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Tabs, Widget},
+    layout::Rect,
+    widgets::{Tabs, Widget},
 };
+use std::sync::{Arc, RwLock};
 
-use crate::api::LinearClient;
-use crate::queries::{custom_views_query, CustomViewsQuery};
 use crate::LTWidget;
+use crate::api::LinearClient;
+use crate::queries::{CustomViewsQuery, custom_views_query};
+
+#[derive(Debug, Clone)]
+pub struct TabWidget {
+    state: Arc<RwLock<TabWidgetState>>,
+}
+
+#[derive(Debug, Clone)]
+struct TabWidgetState {
+    selected_index: u16,
+    tabs: Vec<Tab>,
+}
+
+impl Default for TabWidget {
+    fn default() -> Self {
+        TabWidget {
+            state: Arc::new(RwLock::new(TabWidgetState {
+                selected_index: 0,
+                tabs: vec![Tab {
+                    title: String::from("My Issues"),
+                    custom_view: None,
+                }],
+            })),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Default)]
-pub struct TabWidget {
-    selected_index: u16
+struct Tab {
+    title: String,
+    custom_view: Option<custom_views_query::ViewFragment>,
 }
 
 impl TabWidget {
@@ -24,8 +48,15 @@ impl TabWidget {
         let variables = custom_views_query::Variables {};
         match client.query(CustomViewsQuery, variables).await {
             Ok(data) => {
+                let mut state = self.state.write().unwrap();
+                for custom_view in data.custom_views.nodes.iter() {
+                    state.tabs.push(Tab {
+                        title: custom_view.name.clone(),
+                        custom_view: Some(custom_view.clone()),
+                    });
+                }
                 //self.state.write().unwrap().issues = data.issues.nodes.iter().map(|issue| issue.to_owned().into()).collect();
-                println!("Yes {:#?}", data);
+                // println!("Yes {:#?}", data);
             }
             Err(e) => {
                 panic!("Error {:#?}", e);
@@ -35,12 +66,16 @@ impl TabWidget {
         //self.set_loading_state(LoadingState::Loaded);
     }
     pub fn next(&mut self) {
-        self.selected_index += 1;
+        let mut state = self.state.write().unwrap();
+        if usize::from(state.selected_index) < state.tabs.len() - 1 {
+            state.selected_index += 1;
+        }
     }
 
     pub fn prev(&mut self) {
-        if self.selected_index > 0 {
-            self.selected_index -= 1;
+        let mut state = self.state.write().unwrap();
+        if state.selected_index > 0 {
+            state.selected_index -= 1;
         }
     }
 }
@@ -58,10 +93,15 @@ impl LTWidget for TabWidget {
 
 impl Widget for &TabWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Tabs::new(["My Issues", "Other Issues"])
-            .select(self.selected_index as usize)
-            .padding(" ", " ")
-            .divider("  ")
-            .render(area, buf);
+        Tabs::new(
+            self.state.read().unwrap().tabs
+                .iter()
+                .map(|tab| tab.title.clone())
+                .collect::<Vec<String>>(),
+        )
+        .select(self.state.read().unwrap().selected_index as usize)
+        .padding(" ", " ")
+        .divider("  ")
+        .render(area, buf);
     }
 }

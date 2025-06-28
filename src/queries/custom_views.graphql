@@ -1,9 +1,12 @@
+fragment ViewFragment on CustomView {
+  name
+  slugId
+  id
+}
 query CustomViewsQuery {
   customViews {
     nodes {
-      name
-      slugId
-      id
+      ...ViewFragment
     }
   }
 }
