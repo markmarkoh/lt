@@ -2,7 +2,6 @@ mod api;
 mod iconmap;
 mod queries;
 mod widgets;
-
 use serde::{Deserialize, Serialize};
 use widgets::{MyIssuesWidget, SelectedIssueWidget, TabWidget};
 
@@ -49,6 +48,16 @@ pub enum LtEvent {
     SelectIssue,
 }
 
+pub enum TabChangeEvent {
+    None,
+    FetchCustomViewIssues(custom_views_query::ViewFragment),
+    FetchMyIssues,
+}
+
+impl Default for TabChangeEvent {
+    fn default() -> Self { Self::FetchMyIssues }
+}
+
 //#[derive(Debug)]
 struct App {
     should_quit: bool,
@@ -70,8 +79,8 @@ impl App {
     }
 
     pub async fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
-        self.issue_list_widget.run();
         self.tab_widget.run();
+        self.issue_list_widget.run(TabChangeEvent::default());
         let period = Duration::from_secs_f32(1.0 / Self::FRAMES_PER_SECOND);
         let mut interval = tokio::time::interval(period);
         let mut events = EventStream::new();
@@ -105,20 +114,17 @@ impl App {
                     KeyCode::Char('q') | KeyCode::Esc => {
                         self.should_quit = true;
                     },
-                    KeyCode::Tab => {
-                        self.tab_widget.next();
-                    },
-                    KeyCode::BackTab => {
-                        self.tab_widget.prev();
+                    KeyCode::Tab | KeyCode::BackTab => {
+                        self.issue_list_widget.run( self.tab_widget.handle_event(event));
                     },
                     _ => {
                         self.selected_issue_widget.handle_event(event);
                         if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
-                            let my_issues_widget_state =
+                            let issue_list_widget_state =
                                 self.issue_list_widget.state.write().unwrap();
                             let selected_issue: Option<IssueFragment> =
-                                my_issues_widget_state.list_state.selected().map(|index| {
-                                    my_issues_widget_state.issues[index].clone()
+                                issue_list_widget_state.list_state.selected().map(|index| {
+                                    issue_list_widget_state.issues[index].clone()
                                 });
                             self.selected_issue_widget
                                 .set_selected_issue(selected_issue);
@@ -166,8 +172,30 @@ pub struct IssueFragment {
     pub description: Option<String>,
 }
 
+
 impl From<my_issues_query::IssueFragment> for IssueFragment {
     fn from(item: my_issues_query::IssueFragment) -> Self {
+        Self {
+            title: item.title,
+            identifier: item.identifier,
+            url: item.url,
+            estimate: item.estimate,
+            state: item.state.into(),
+            created_at: item.created_at,
+            priority: item.priority,
+            priority_label: item.priority_label,
+            branch_name: item.branch_name,
+            description: item.description,
+            labels: item.labels.into(),
+            assignee: item.assignee.map(|assignee| assignee.into()),
+            creator: item.creator.map(|creator| creator.into()),
+            project: item.project.map(|project| project.into()),
+        }
+    }
+}
+
+impl From<custom_view_query::IssueFragment> for IssueFragment {
+    fn from(item: custom_view_query::IssueFragment) -> Self {
         Self {
             title: item.title,
             identifier: item.identifier,
@@ -205,6 +233,18 @@ impl From<my_issues_query::IssueFragmentState> for IssueFragmentState {
     }
 }
 
+impl From<custom_view_query::IssueFragmentState> for IssueFragmentState {
+    fn from(item: custom_view_query::IssueFragmentState) -> Self {
+        Self {
+            name: item.name,
+            color: item.color,
+            type_: item.type_,
+        }
+    }
+}
+
+
+
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct IssueFragmentAssignee {
     #[serde(rename = "isMe")]
@@ -215,6 +255,15 @@ pub struct IssueFragmentAssignee {
 
 impl From<my_issues_query::IssueFragmentAssignee> for IssueFragmentAssignee {
     fn from(item: my_issues_query::IssueFragmentAssignee) -> Self {
+        Self {
+            is_me: item.is_me,
+            display_name: item.display_name,
+        }
+    }
+}
+
+impl From<custom_view_query::IssueFragmentAssignee> for IssueFragmentAssignee {
+    fn from(item: custom_view_query::IssueFragmentAssignee) -> Self {
         Self {
             is_me: item.is_me,
             display_name: item.display_name,
@@ -239,6 +288,15 @@ impl From<my_issues_query::IssueFragmentCreator> for IssueFragmentCreator {
     }
 }
 
+impl From<custom_view_query::IssueFragmentCreator> for IssueFragmentCreator {
+    fn from(item: custom_view_query::IssueFragmentCreator) -> Self {
+        Self {
+            is_me: item.is_me,
+            display_name: item.display_name,
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct IssueFragmentProject {
     pub name: String,
@@ -256,6 +314,18 @@ impl From<my_issues_query::IssueFragmentProject> for IssueFragmentProject {
     }
 }
 
+impl From<custom_view_query::IssueFragmentProject> for IssueFragmentProject {
+    fn from(item: custom_view_query::IssueFragmentProject) -> Self {
+        Self {
+            name: item.name,
+            icon: item.icon,
+            color: item.color,
+        }
+    }
+}
+
+
+
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct IssueFragmentLabels {
     pub edges: Vec<IssueFragmentLabelsEdges>,
@@ -263,6 +333,14 @@ pub struct IssueFragmentLabels {
 
 impl From<my_issues_query::IssueFragmentLabels> for IssueFragmentLabels {
     fn from(item: my_issues_query::IssueFragmentLabels) -> Self {
+        Self {
+            edges: item.edges.iter().map(|edge| edge.to_owned().into()).collect(),
+        }
+    }
+}
+
+impl From<custom_view_query::IssueFragmentLabels> for IssueFragmentLabels {
+    fn from(item: custom_view_query::IssueFragmentLabels) -> Self {
         Self {
             edges: item.edges.iter().map(|edge| edge.to_owned().into()).collect(),
         }
@@ -282,6 +360,14 @@ impl From<my_issues_query::IssueFragmentLabelsEdges> for IssueFragmentLabelsEdge
     }
 }
 
+impl From<custom_view_query::IssueFragmentLabelsEdges> for IssueFragmentLabelsEdges {
+    fn from(item: custom_view_query::IssueFragmentLabelsEdges) -> Self {
+        Self {
+            node: item.node.into(),
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct IssueFragmentLabelsEdgesNode {
     pub color: String,
@@ -290,6 +376,15 @@ pub struct IssueFragmentLabelsEdgesNode {
 
 impl From<my_issues_query::IssueFragmentLabelsEdgesNode> for IssueFragmentLabelsEdgesNode {
     fn from(item: my_issues_query::IssueFragmentLabelsEdgesNode) -> Self {
+        Self {
+            color: item.color,
+            name: item.name,
+        }
+    }
+}
+
+impl From<custom_view_query::IssueFragmentLabelsEdgesNode> for IssueFragmentLabelsEdgesNode {
+    fn from(item: custom_view_query::IssueFragmentLabelsEdgesNode) -> Self {
         Self {
             color: item.color,
             name: item.name,

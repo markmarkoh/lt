@@ -1,3 +1,4 @@
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::buffer::Buffer;
 use ratatui::{
     layout::Rect,
@@ -5,9 +6,9 @@ use ratatui::{
 };
 use std::sync::{Arc, RwLock};
 
-use crate::LTWidget;
 use crate::api::LinearClient;
 use crate::queries::{CustomViewsQuery, custom_views_query};
+use crate::{LTWidget, LtEvent, TabChangeEvent};
 
 #[derive(Debug, Clone)]
 pub struct TabWidget {
@@ -16,7 +17,7 @@ pub struct TabWidget {
 
 #[derive(Debug, Clone)]
 struct TabWidgetState {
-    selected_index: u16,
+    selected_index: usize,
     tabs: Vec<Tab>,
 }
 
@@ -41,6 +42,11 @@ struct Tab {
 }
 
 impl TabWidget {
+    pub fn run(&self) {
+        let this = self.clone();
+        tokio::spawn(this.fetch());
+    }
+
     async fn fetch(self) {
         let linear_api_token =
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
@@ -55,8 +61,6 @@ impl TabWidget {
                         custom_view: Some(custom_view.clone()),
                     });
                 }
-                //self.state.write().unwrap().issues = data.issues.nodes.iter().map(|issue| issue.to_owned().into()).collect();
-                // println!("Yes {:#?}", data);
             }
             Err(e) => {
                 panic!("Error {:#?}", e);
@@ -65,41 +69,64 @@ impl TabWidget {
         }
         //self.set_loading_state(LoadingState::Loaded);
     }
-    pub fn next(&mut self) {
+    pub fn next(&self) {
         let mut state = self.state.write().unwrap();
-        if usize::from(state.selected_index) < state.tabs.len() - 1 {
+        if state.selected_index < state.tabs.len() - 1 {
             state.selected_index += 1;
         }
     }
 
-    pub fn prev(&mut self) {
+    pub fn prev(&self) {
         let mut state = self.state.write().unwrap();
         if state.selected_index > 0 {
             state.selected_index -= 1;
         }
     }
-}
 
-impl LTWidget for TabWidget {
-    fn run(&self) {
-        let this = self.clone();
-        tokio::spawn(this.fetch());
-    }
-
-    fn handle_event(&self, _event: &crossterm::event::Event) -> crate::LtEvent {
-        crate::LtEvent::None
+    pub fn handle_event(&self, event: &Event) -> crate::TabChangeEvent {
+        if let Event::Key(key) = event {
+            if key.kind == KeyEventKind::Press {
+                match key.code {
+                    KeyCode::Tab => {
+                        self.next();
+                        let state = self.state.read().unwrap();
+                        match &state.tabs[state.selected_index].custom_view {
+                            Some(custom_view) => {
+                                return TabChangeEvent::FetchCustomViewIssues(custom_view.clone());
+                            }
+                            _ => return TabChangeEvent::FetchMyIssues,
+                        }
+                    }
+                    KeyCode::BackTab => {
+                        self.prev();
+                        let state = self.state.read().unwrap();
+                        match &state.tabs[state.selected_index].custom_view {
+                            Some(custom_view) => {
+                                return TabChangeEvent::FetchCustomViewIssues(custom_view.clone());
+                            }
+                            _ => return TabChangeEvent::FetchMyIssues,
+                        }
+                    }
+                    _ => return TabChangeEvent::None,
+                }
+            }
+        }
+        TabChangeEvent::None
     }
 }
 
 impl Widget for &TabWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Tabs::new(
-            self.state.read().unwrap().tabs
+            self.state
+                .read()
+                .unwrap()
+                .tabs
                 .iter()
                 .map(|tab| tab.title.clone())
                 .collect::<Vec<String>>(),
         )
-        .select(self.state.read().unwrap().selected_index as usize)
+        .select(self.state.read().unwrap().selected_index)
         .padding(" ", " ")
         .divider("  ")
         .render(area, buf);

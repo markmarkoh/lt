@@ -16,13 +16,9 @@ use ratatui::{
 };
 
 use crate::{
-    LTWidget, LoadingState, LtEvent, IssueFragment,
-    api::LinearClient,
-    iconmap,
-    queries::{
-        MyIssuesQuery,
-        my_issues_query::{self},
-    },
+    api::LinearClient, iconmap, queries::{
+        custom_view_query, custom_views_query, my_issues_query::{self}, CustomViewQuery, MyIssuesQuery
+    }, IssueFragment, LTWidget, LoadingState, LtEvent, TabChangeEvent
 };
 
 #[derive(Debug, Default)]
@@ -38,7 +34,7 @@ pub struct MyIssuesWidget {
 }
 
 impl MyIssuesWidget {
-    async fn fetch(self) {
+    async fn fetch_my_issues(self) {
         self.set_loading_state(LoadingState::Loading);
         let linear_api_token =
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
@@ -46,7 +42,38 @@ impl MyIssuesWidget {
         let variables = my_issues_query::Variables {};
         match client.query(MyIssuesQuery, variables).await {
             Ok(data) => {
-                self.state.write().unwrap().issues = data.issues.nodes.iter().map(|issue| issue.to_owned().into()).collect();
+                self.state.write().unwrap().issues = data
+                    .issues
+                    .nodes
+                    .iter()
+                    .map(|issue| issue.to_owned().into())
+                    .collect();
+            }
+            Err(e) => {
+                self.set_loading_state(LoadingState::Error(e.to_string()));
+                return;
+            }
+        }
+        self.set_loading_state(LoadingState::Loaded);
+    }
+
+    async fn fetch_custom_view(self, view: custom_views_query::ViewFragment) {
+        self.set_loading_state(LoadingState::Loading);
+        let linear_api_token =
+            std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
+        let client = LinearClient::new(linear_api_token).unwrap();
+        let variables = custom_view_query::Variables {
+            custom_view_id: view.id
+        };
+        match client.query(CustomViewQuery, variables).await {
+            Ok(data) => {
+                self.state.write().unwrap().issues = data
+                    .custom_view
+                    .issues
+                    .nodes
+                    .iter()
+                    .map(|issue| issue.to_owned().into())
+                    .collect();
             }
             Err(e) => {
                 self.set_loading_state(LoadingState::Error(e.to_string()));
@@ -103,15 +130,21 @@ impl MyIssuesWidget {
             Ok(())
         }
     }
-}
 
-impl LTWidget for MyIssuesWidget {
-    fn run(&self) {
+    pub fn run(&self, tab_change_event: TabChangeEvent) {
         let this = self.clone();
-        tokio::spawn(this.fetch());
+        match tab_change_event {
+            TabChangeEvent::FetchMyIssues => {
+                tokio::spawn(this.fetch_my_issues());
+            },
+            TabChangeEvent::FetchCustomViewIssues(view) => {
+                tokio::spawn(this.fetch_custom_view(view));
+            },
+            _ => ()
+        }
     }
 
-    fn handle_event(&self, event: &Event) -> LtEvent {
+    pub fn handle_event(&self, event: &Event) -> LtEvent {
         if self.get_loading_state() != LoadingState::Loaded {
             return LtEvent::None;
         }
@@ -127,7 +160,7 @@ impl LTWidget for MyIssuesWidget {
                         return LtEvent::SelectIssue;
                     }
                     KeyCode::Char('r') => {
-                        self.run();
+                        self.run(TabChangeEvent::FetchMyIssues);
                         // TODO: Figure out how to get state to update better
                         return LtEvent::SelectIssue;
                     }
@@ -197,13 +230,12 @@ impl Widget for &MyIssuesWidget {
         });
 
         // tests can't see the highlighting
-        let highlight_symbol = if cfg!(test) {
-            ">"
-        } else {
-            ""
-        };
+        let highlight_symbol = if cfg!(test) { ">" } else { "" };
 
-        let list = List::new(rows).highlight_style(SELECTED_STYLE).highlight_symbol(highlight_symbol).block(block);
+        let list = List::new(rows)
+            .highlight_style(SELECTED_STYLE)
+            .highlight_symbol(highlight_symbol)
+            .block(block);
         StatefulWidget::render(list, area, buf, &mut state.list_state);
     }
 }
@@ -254,7 +286,7 @@ mod tests {
             state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
                 loading_state: crate::LoadingState::Loaded,
                 list_state: ListState::default(),
-                issues
+                issues,
             })),
         };
         let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
@@ -289,6 +321,5 @@ mod tests {
         // test that <y> yanks the branch name to the clipboard
         app.handle_event(&create_key_event('y'));
         assert_eq!(cli_clipboard::get_contents().unwrap(), "test-1-branch-name");
-
     }
 }
