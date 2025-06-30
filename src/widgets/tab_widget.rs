@@ -6,9 +6,9 @@ use ratatui::{
 };
 use std::sync::{Arc, RwLock};
 
+use crate::TabChangeEvent;
 use crate::api::LinearClient;
 use crate::queries::{CustomViewsQuery, custom_views_query};
-use crate::{LTWidget, LtEvent, TabChangeEvent};
 
 #[derive(Debug, Clone)]
 pub struct TabWidget {
@@ -130,5 +130,123 @@ impl Widget for &TabWidget {
         .padding(" ", " ")
         .divider("  ")
         .render(area, buf);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, RwLock};
+
+    use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
+    use insta::assert_snapshot;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    use crate::{
+        TabChangeEvent,
+        queries::custom_views_query,
+        widgets::TabWidget,
+    };
+
+    use super::{Tab, TabWidgetState};
+
+    fn create_key_event(code: KeyCode) -> crossterm::event::Event {
+        crossterm::event::Event::Key(crossterm::event::KeyEvent {
+            code,
+            kind: KeyEventKind::Press,
+            modifiers: KeyModifiers::empty(),
+            state: KeyEventState::empty(),
+        })
+    }
+
+    #[test]
+    fn test_empty_state() {
+        let app = TabWidget::default();
+        let mut terminal = Terminal::new(TestBackend::new(50, 2)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        assert_snapshot!(terminal.backend());
+
+        let ev = app.handle_event(&create_key_event(KeyCode::Tab));
+        assert_eq!(ev, TabChangeEvent::FetchMyIssues);
+
+        let ev = app.handle_event(&create_key_event(KeyCode::Char('j')));
+        assert_eq!(ev, TabChangeEvent::None);
+    }
+
+    #[test]
+    fn test_multi_tabs() {
+        let app = TabWidget {
+            state: Arc::new(RwLock::new(TabWidgetState {
+                selected_index: 0,
+                tabs: vec![
+                    Tab {
+                        title: String::from("My Issues"),
+                        custom_view: None,
+                    },
+                    Tab {
+                        title: String::from("Custom A"),
+                        custom_view: Some(custom_views_query::ViewFragment {
+                            slug_id: Some("sluga".into()),
+                            id: "sluga".into(),
+                            name: "Custom A".into(),
+                        }),
+                    },
+                    Tab {
+                        title: String::from("Custom B"),
+                        custom_view: Some(custom_views_query::ViewFragment {
+                            slug_id: Some("slugb".into()),
+                            id: "slugb".into(),
+                            name: "Custom B".into(),
+                        }),
+                    },
+                ],
+            })),
+        };
+
+        let mut terminal = Terminal::new(TestBackend::new(50, 2)).unwrap();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        assert_snapshot!(terminal.backend());
+
+        // should go to  tab a
+        let ev = app.handle_event(&create_key_event(KeyCode::Tab));
+        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+            name: "sluga".into(),
+            slug_id: Some("sluga".into()),
+            id: String::from("sluga")
+        }));
+
+        // then to b
+        let ev = app.handle_event(&create_key_event(KeyCode::Tab));
+        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+            name: "slugb".into(),
+            slug_id: Some("slugb".into()),
+            id: String::from("slugb")
+        }));
+
+        // but not passed b
+        let ev = app.handle_event(&create_key_event(KeyCode::Tab));
+        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+            name: "slugb".into(),
+            slug_id: Some("slugb".into()),
+            id: String::from("slugb")
+        }));
+
+        // then back to a 
+        let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
+        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+            name: "sluga".into(),
+            slug_id: Some("sluga".into()),
+            id: String::from("sluga")
+        }));
+
+        let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
+        assert_eq!(ev, TabChangeEvent::FetchMyIssues);
+
+
     }
 }

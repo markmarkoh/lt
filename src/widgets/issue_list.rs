@@ -18,7 +18,7 @@ use ratatui::{
 use crate::{
     api::LinearClient, iconmap, queries::{
         custom_view_query, custom_views_query, my_issues_query::{self}, CustomViewQuery, MyIssuesQuery
-    }, IssueFragment, LTWidget, LoadingState, LtEvent, TabChangeEvent
+    }, IssueFragment, LoadingState, LtEvent, TabChangeEvent
 };
 
 #[derive(Debug, Default)]
@@ -48,6 +48,7 @@ impl MyIssuesWidget {
                     .iter()
                     .map(|issue| issue.to_owned().into())
                     .collect();
+                self.state.write().unwrap().list_state.select(None);
             }
             Err(e) => {
                 self.set_loading_state(LoadingState::Error(e.to_string()));
@@ -74,6 +75,7 @@ impl MyIssuesWidget {
                     .iter()
                     .map(|issue| issue.to_owned().into())
                     .collect();
+                self.state.write().unwrap().list_state.select(None);
             }
             Err(e) => {
                 self.set_loading_state(LoadingState::Error(e.to_string()));
@@ -249,8 +251,7 @@ mod tests {
     use ratatui::{Terminal, backend::TestBackend, widgets::ListState};
 
     use crate::{
-        LTWidget, LtEvent, queries,
-        widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
+        LtEvent, widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
     };
 
     fn create_key_event(key: char) -> crossterm::event::Event {

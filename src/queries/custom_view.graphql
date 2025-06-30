@@ -1,0 +1,47 @@
+fragment IssueFragment on Issue {
+      title
+      identifier
+      state {
+        name
+        color
+        type
+      }
+      url
+      assignee {
+        isMe
+        displayName
+      }
+      creator {
+        isMe
+        displayName
+      }
+      estimate
+      project {
+        name
+        icon
+        color
+      }
+      createdAt
+      priorityLabel
+      priority
+      labels {
+        edges {
+          node {
+            color
+            name
+          }
+        }
+      }
+      branchName
+      description
+}
+
+query CustomViewQuery($custom_view_id: String!) {
+  customView(id: $custom_view_id) {
+    issues {
+      nodes {
+        ...IssueFragment
+      }
+    }
+  }
+}

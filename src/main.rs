@@ -34,28 +34,30 @@ async fn main() -> Result<()> {
     app_result
 }
 
-/*
-* Basic high level API for each widget
-*/
-pub trait LTWidget {
-    fn run(&self);
-    fn handle_event(&self, event: &Event) -> LtEvent;
-}
-
+/* Events for widget communication */
 #[derive(Debug, PartialEq)]
 pub enum LtEvent {
     None,
     SelectIssue,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum TabChangeEvent {
     None,
     FetchCustomViewIssues(custom_views_query::ViewFragment),
     FetchMyIssues,
 }
 
+impl PartialEq for custom_views_query::ViewFragment {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl Default for TabChangeEvent {
-    fn default() -> Self { Self::FetchMyIssues }
+    fn default() -> Self {
+        Self::FetchMyIssues
+    }
 }
 
 //#[derive(Debug)]
@@ -113,19 +115,20 @@ impl App {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => {
                         self.should_quit = true;
-                    },
+                    }
                     KeyCode::Tab | KeyCode::BackTab => {
-                        self.issue_list_widget.run( self.tab_widget.handle_event(event));
-                    },
+                        self.issue_list_widget
+                            .run(self.tab_widget.handle_event(event));
+                    }
                     _ => {
                         self.selected_issue_widget.handle_event(event);
                         if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
                             let issue_list_widget_state =
                                 self.issue_list_widget.state.write().unwrap();
-                            let selected_issue: Option<IssueFragment> =
-                                issue_list_widget_state.list_state.selected().map(|index| {
-                                    issue_list_widget_state.issues[index].clone()
-                                });
+                            let selected_issue: Option<IssueFragment> = issue_list_widget_state
+                                .list_state
+                                .selected()
+                                .map(|index| issue_list_widget_state.issues[index].clone());
                             self.selected_issue_widget
                                 .set_selected_issue(selected_issue);
                         }
@@ -171,7 +174,6 @@ pub struct IssueFragment {
     pub branch_name: String,
     pub description: Option<String>,
 }
-
 
 impl From<my_issues_query::IssueFragment> for IssueFragment {
     fn from(item: my_issues_query::IssueFragment) -> Self {
@@ -242,8 +244,6 @@ impl From<custom_view_query::IssueFragmentState> for IssueFragmentState {
         }
     }
 }
-
-
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct IssueFragmentAssignee {
@@ -324,8 +324,6 @@ impl From<custom_view_query::IssueFragmentProject> for IssueFragmentProject {
     }
 }
 
-
-
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
 pub struct IssueFragmentLabels {
     pub edges: Vec<IssueFragmentLabelsEdges>,
@@ -334,7 +332,11 @@ pub struct IssueFragmentLabels {
 impl From<my_issues_query::IssueFragmentLabels> for IssueFragmentLabels {
     fn from(item: my_issues_query::IssueFragmentLabels) -> Self {
         Self {
-            edges: item.edges.iter().map(|edge| edge.to_owned().into()).collect(),
+            edges: item
+                .edges
+                .iter()
+                .map(|edge| edge.to_owned().into())
+                .collect(),
         }
     }
 }
@@ -342,7 +344,11 @@ impl From<my_issues_query::IssueFragmentLabels> for IssueFragmentLabels {
 impl From<custom_view_query::IssueFragmentLabels> for IssueFragmentLabels {
     fn from(item: custom_view_query::IssueFragmentLabels) -> Self {
         Self {
-            edges: item.edges.iter().map(|edge| edge.to_owned().into()).collect(),
+            edges: item
+                .edges
+                .iter()
+                .map(|edge| edge.to_owned().into())
+                .collect(),
         }
     }
 }
