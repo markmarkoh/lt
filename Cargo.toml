@@ -1,6 +1,6 @@
 [package]
 name = "lt"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2024"
 description = "A TUI application to view & interact with Linear.app issues"
 authors = ["Mark Di Marco <mark.dimarco@gmail.com>"]
