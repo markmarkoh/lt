@@ -1,6 +1,8 @@
 fragment ViewFragment on CustomView {
   name
   slugId
+  color
+  icon
   id
 }
 query CustomViewsQuery {

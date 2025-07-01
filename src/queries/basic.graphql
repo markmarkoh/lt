@@ -43,7 +43,7 @@ query MyIssuesQuery {
         state: { type: { in: ["started", "backlog", "unstarted"] } }
       },
       sort: {
-        createdAt:  {
+        priority:  {
            order: Descending
         }
     }

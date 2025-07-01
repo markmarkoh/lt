@@ -1,14 +1,19 @@
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::buffer::Buffer;
+use ratatui::layout::{Constraint, Layout};
+use ratatui::style::Color;
+use ratatui::text::{Line, Span};
 use ratatui::{
     layout::Rect,
+    style::Stylize,
     widgets::{Tabs, Widget},
 };
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
-use crate::TabChangeEvent;
 use crate::api::LinearClient;
 use crate::queries::{CustomViewsQuery, custom_views_query};
+use crate::{TabChangeEvent, iconmap};
 
 #[derive(Debug, Clone)]
 pub struct TabWidget {
@@ -67,7 +72,6 @@ impl TabWidget {
                 //return;
             }
         }
-        //self.set_loading_state(LoadingState::Loaded);
     }
     pub fn next(&self) {
         let mut state = self.state.write().unwrap();
@@ -117,19 +121,45 @@ impl TabWidget {
 
 impl Widget for &TabWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        use Constraint::{Length, Min};
+        let horizontal = Layout::horizontal([Length(23), Min(0)]);
+        let [header, main] = horizontal.areas(area);
+
+        Line::from(vec![
+            Span::from(" <tab> ").blue(),
+            Span::from("to change view:  "),
+        ])
+        .render(header, buf);
         Tabs::new(
             self.state
                 .read()
                 .unwrap()
                 .tabs
                 .iter()
-                .map(|tab| tab.title.clone())
-                .collect::<Vec<String>>(),
+                .map(|tab| {
+                    let (icon, color) = if let Some(view) = &tab.custom_view {
+                        (
+                            match &view.icon {
+                                Some(icon) => iconmap::ico_to_nf(icon),
+                                _ => "".to_string(),
+                            },
+                            match &view.color {
+                                Some(color) => String::from(color),
+                                _ => "#ffffff".to_string(),
+                            },
+                        )
+                    } else {
+                        (iconmap::ico_to_nf("Home"), String::from("#FFFFFF"))
+                    };
+                    let project_color = Color::from_str(&color).unwrap();
+                    Span::from(format!("{} {}", icon, tab.title.clone().bold())).fg(project_color).bold()
+                })
+                .collect::<Vec<Span>>(),
         )
         .select(self.state.read().unwrap().selected_index)
         .padding(" ", " ")
         .divider("  ")
-        .render(area, buf);
+        .render(main, buf);
     }
 }
 
@@ -141,11 +171,7 @@ mod tests {
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend};
 
-    use crate::{
-        TabChangeEvent,
-        queries::custom_views_query,
-        widgets::TabWidget,
-    };
+    use crate::{TabChangeEvent, queries::custom_views_query, widgets::TabWidget};
 
     use super::{Tab, TabWidgetState};
 
@@ -161,7 +187,7 @@ mod tests {
     #[test]
     fn test_empty_state() {
         let app = TabWidget::default();
-        let mut terminal = Terminal::new(TestBackend::new(50, 2)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(75, 2)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();
@@ -189,6 +215,8 @@ mod tests {
                         title: String::from("Custom A"),
                         custom_view: Some(custom_views_query::ViewFragment {
                             slug_id: Some("sluga".into()),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
                             id: "sluga".into(),
                             name: "Custom A".into(),
                         }),
@@ -198,6 +226,8 @@ mod tests {
                         custom_view: Some(custom_views_query::ViewFragment {
                             slug_id: Some("slugb".into()),
                             id: "slugb".into(),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
                             name: "Custom B".into(),
                         }),
                     },
@@ -205,7 +235,7 @@ mod tests {
             })),
         };
 
-        let mut terminal = Terminal::new(TestBackend::new(50, 2)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(75, 2)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();
@@ -214,39 +244,57 @@ mod tests {
 
         // should go to  tab a
         let ev = app.handle_event(&create_key_event(KeyCode::Tab));
-        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
-            name: "sluga".into(),
-            slug_id: Some("sluga".into()),
-            id: String::from("sluga")
-        }));
+        assert_eq!(
+            ev,
+            TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+                name: "sluga".into(),
+                slug_id: Some("sluga".into()),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
+                id: String::from("sluga")
+            })
+        );
 
         // then to b
         let ev = app.handle_event(&create_key_event(KeyCode::Tab));
-        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
-            name: "slugb".into(),
-            slug_id: Some("slugb".into()),
-            id: String::from("slugb")
-        }));
+        assert_eq!(
+            ev,
+            TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+                name: "slugb".into(),
+                slug_id: Some("slugb".into()),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
+                id: String::from("slugb")
+            })
+        );
 
         // but not passed b
         let ev = app.handle_event(&create_key_event(KeyCode::Tab));
-        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
-            name: "slugb".into(),
-            slug_id: Some("slugb".into()),
-            id: String::from("slugb")
-        }));
+        assert_eq!(
+            ev,
+            TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+                name: "slugb".into(),
+                slug_id: Some("slugb".into()),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
+                id: String::from("slugb")
+            })
+        );
 
-        // then back to a 
+        // then back to a
         let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
-        assert_eq!(ev, TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
-            name: "sluga".into(),
-            slug_id: Some("sluga".into()),
-            id: String::from("sluga")
-        }));
+        assert_eq!(
+            ev,
+            TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
+                name: "sluga".into(),
+                slug_id: Some("sluga".into()),
+                            color: Some("#fa0faf".to_string()),
+                            icon: Some("Education".to_string()),
+                id: String::from("sluga")
+            })
+        );
 
         let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
         assert_eq!(ev, TabChangeEvent::FetchMyIssues);
-
-
     }
 }

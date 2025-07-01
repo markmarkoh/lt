@@ -38,7 +38,11 @@ fragment IssueFragment on Issue {
 
 query CustomViewQuery($custom_view_id: String!) {
   customView(id: $custom_view_id) {
-    issues {
+    issues(sort: {
+      priority: {
+        order: Descending
+      }
+    }) {
       nodes {
         ...IssueFragment
       }

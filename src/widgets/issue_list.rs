@@ -188,7 +188,6 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c100).fg(BLUE_GRAY.c900);
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let mut block = Block::bordered()
-            .title("My Issues")
             .title_bottom(Line::from(vec![
                 Span::from(" <j/k> ").blue(),
                 Span::from("to select issue "),

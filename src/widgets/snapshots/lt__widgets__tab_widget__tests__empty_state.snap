@@ -2,5 +2,5 @@
 source: src/widgets/tab_widget.rs
 expression: terminal.backend()
 ---
-" My Issues                                        "
-"                                                  "
+" <tab> to change view:    My Issues                                       "
+"                                                                           "

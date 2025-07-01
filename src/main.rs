@@ -124,7 +124,7 @@ impl App {
                         self.selected_issue_widget.handle_event(event);
                         if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
                             let issue_list_widget_state =
-                                self.issue_list_widget.state.write().unwrap();
+            self.issue_list_widget.state.write().unwrap();
                             let selected_issue: Option<IssueFragment> = issue_list_widget_state
                                 .list_state
                                 .selected()
