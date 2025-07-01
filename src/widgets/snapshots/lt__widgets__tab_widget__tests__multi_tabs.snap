@@ -1,0 +1,6 @@
+---
+source: src/widgets/tab_widget.rs
+expression: terminal.backend()
+---
+" <tab> to change view:    My Issues      Custom A      Custom B         "
+"                                                                           "

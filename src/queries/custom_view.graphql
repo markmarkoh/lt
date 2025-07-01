@@ -36,20 +36,16 @@ fragment IssueFragment on Issue {
       description
 }
 
-query MyIssuesQuery {
-    issues(
-      filter: {
-        assignee: { isMe: { eq: true } }
-        state: { type: { in: ["started", "backlog", "unstarted"] } }
-      },
-      sort: {
-        priority:  {
-           order: Descending
-        }
-    }
-  ) {
-    nodes {
-      ...IssueFragment
+query CustomViewQuery($custom_view_id: String!) {
+  customView(id: $custom_view_id) {
+    issues(sort: {
+      priority: {
+        order: Descending
+      }
+    }) {
+      nodes {
+        ...IssueFragment
+      }
     }
   }
 }

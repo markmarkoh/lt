@@ -2,7 +2,7 @@
 source: src/widgets/issue_list.rs
 expression: terminal.backend()
 ---
-"┌My Issues─────────────────────────────┐"
+"┌──────────────────────────────────────┐"
 "│                                      │"
 "│                                      │"
 "│                                      │"

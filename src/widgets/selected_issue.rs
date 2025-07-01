@@ -1,6 +1,6 @@
+use crate::IssueFragment;
 use crate::LtEvent;
 use crate::iconmap;
-use crate::queries;
 
 use crossterm::event::Event;
 use crossterm::event::KeyCode;
@@ -19,7 +19,6 @@ use std::sync::{Arc, RwLock};
 
 use chrono::DateTime;
 
-use queries::*;
 use ratatui::buffer::Buffer;
 use ratatui::{
     layout::{Constraint, Layout, Rect},
@@ -31,7 +30,7 @@ use ratatui::{
 
 #[derive(Debug, Default)]
 struct SelectedIssueWidgetState {
-    selected_issue: Option<my_issues_query::MyIssuesQueryIssuesNodes>,
+    selected_issue: Option<IssueFragment>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -42,7 +41,7 @@ pub struct SelectedIssueWidget {
 }
 
 impl SelectedIssueWidget {
-    pub fn set_selected_issue(&mut self, issue: Option<my_issues_query::MyIssuesQueryIssuesNodes>) {
+    pub fn set_selected_issue(&mut self, issue: Option<IssueFragment>) {
         self.state.write().unwrap().selected_issue = issue;
         self.scroll = 0;
         self.scroll_state = ScrollbarState::default();
@@ -281,34 +280,37 @@ impl Widget for &SelectedIssueWidget {
 // Now in tests module:
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::queries::my_issues_query;
+    use crate::{
+        IssueFragment, IssueFragmentAssignee, IssueFragmentCreator, IssueFragmentProject,
+        IssueFragmentState,
+    };
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend};
 
     use crate::widgets::SelectedIssueWidget;
 
-    pub fn make_issue(title: &str, identifier: &str) -> my_issues_query::MyIssuesQueryIssuesNodes {
-        my_issues_query::MyIssuesQueryIssuesNodes {
+    pub fn make_issue(title: &str, identifier: &str) -> IssueFragment {
+        IssueFragment {
             priority: 1.0,
             priority_label: "Urgent".into(),
             branch_name: "test-1-branch-name".into(),
             identifier: String::from(identifier),
             title: String::from(title),
             created_at: String::from("2025-05-10T03:09:51.740Z"),
-            project: Some(my_issues_query::MyIssuesQueryIssuesNodesProject {
+            project: Some(IssueFragmentProject {
                 name: "Test Project".into(),
                 icon: Some("Subgroup".into()),
                 color: "#FA0FA0".into(),
             }),
-            creator: Some(my_issues_query::MyIssuesQueryIssuesNodesCreator {
+            creator: Some(IssueFragmentCreator {
                 is_me: true,
                 display_name: "Creator Display Name".into(),
             }),
-            assignee: Some(my_issues_query::MyIssuesQueryIssuesNodesAssignee {
+            assignee: Some(IssueFragmentAssignee {
                 is_me: false,
                 display_name: "Assignee Display Name".into(),
             }),
-            state: my_issues_query::MyIssuesQueryIssuesNodesState {
+            state: IssueFragmentState {
                 name: "Backlogged".into(),
                 color: "#0FA0FA".into(),
                 type_: "backlog".into(),
