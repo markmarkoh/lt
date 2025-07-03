@@ -1,8 +1,8 @@
 [package]
 name = "lt"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2024"
-description = "A TUI application to view & interact with Linear.app issues"
+description = "An unofficial TUI client for Linear.app issues"
 authors = ["Mark Di Marco <mark.dimarco@gmail.com>"]
 keywords = ["linear", "tui", "issues"]
 categories = ["command-line-utilities"]
