@@ -1,5 +1,5 @@
 # `lt` (ell-tee)
-<img width="900" alt="Screenshot 2025-06-08 at 4 48 29 PM" src="https://github.com/user-attachments/assets/073013c1-185f-49b9-b04a-68996a5d269c" />
+<img width="900" alt="Screenshot 2025-07-02 at 8 48 01 PM" src="https://github.com/user-attachments/assets/105d244a-a088-47e0-b9be-387547e9b185" />
 
 `lt` is a simple TUI application to view issues from [linear.app](https://linear.app/), for those of us still in love with the terminal. `lt` is read-only at the moment.
 
@@ -7,9 +7,9 @@
 * View "My Issues", and the issue description, project, priority, status, tags, assignee, creator  
 * Press `y` to yank (copy) the git branch name to the clipboard
 * Press `o` to open the full issue in Linear desktop or web, whichever you have installed.
-
+* **New in 0.0.4**: View switcher (`Tab`/`Shift+Tab`) - switch between custom views as defined in your Linear app
+  
 ### Planned Features
-* View switcher - from custom views created in Linear to project or cycle views
 * Faster loading via cacheing
 * Richer markdown presentation
 * Tighter local git integration
@@ -39,5 +39,4 @@ cargo build --release
 ```
 
 ## Demo 
-![2025-06-08 16 50 46](https://github.com/user-attachments/assets/e05291c8-e12c-48ea-a2e2-159fee52308f)
-
+![2025-07-02 20 50 09](https://github.com/user-attachments/assets/27616e50-4ac7-4cef-b6ef-88626d475ec3)
