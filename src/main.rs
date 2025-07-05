@@ -124,11 +124,13 @@ impl App {
                         self.selected_issue_widget.handle_event(event);
                         if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
                             let issue_list_widget_state =
-            self.issue_list_widget.state.write().unwrap();
+                                self.issue_list_widget.state.write().unwrap();
                             let selected_issue: Option<IssueFragment> = issue_list_widget_state
                                 .list_state
                                 .selected()
-                                .map(|index| issue_list_widget_state.issues[index].clone());
+                                .map(|index| {
+                                    issue_list_widget_state.issue_map[&self.issue_list_widget.selected_view_id][index].clone()
+                                });
                             self.selected_issue_widget
                                 .set_selected_issue(selected_issue);
                         }
