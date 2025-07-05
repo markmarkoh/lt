@@ -186,11 +186,6 @@ impl MyIssuesWidget {
                         self.scroll_up();
                         return LtEvent::SelectIssue;
                     }
-                    KeyCode::Char('r') => {
-                        //self.run(TabChangeEvent::FetchMyIssues);
-                        // TODO: Figure out how to get state to update better
-                        return LtEvent::SelectIssue;
-                    }
                     KeyCode::Char('o') => {
                         let _ = self.open_url();
                         return LtEvent::None;
