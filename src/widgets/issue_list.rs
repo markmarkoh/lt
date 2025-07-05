@@ -15,22 +15,29 @@ use ratatui::{
     widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
 };
 
+use std::collections::HashMap;
+
 use crate::{
-    api::LinearClient, iconmap, queries::{
-        custom_view_query, custom_views_query, my_issues_query::{self}, CustomViewQuery, MyIssuesQuery
-    }, IssueFragment, LoadingState, LtEvent, TabChangeEvent
+    IssueFragment, LoadingState, LtEvent, TabChangeEvent,
+    api::LinearClient,
+    iconmap,
+    queries::{
+        CustomViewQuery, MyIssuesQuery, custom_view_query, custom_views_query,
+        my_issues_query::{self},
+    },
 };
 
 #[derive(Debug, Default)]
 pub struct MyIssuesWidgetState {
     loading_state: LoadingState,
     pub list_state: ListState,
-    pub issues: Vec<IssueFragment>,
+    pub issue_map: HashMap<String, Vec<IssueFragment>>,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct MyIssuesWidget {
     pub state: Arc<RwLock<MyIssuesWidgetState>>,
+    pub selected_view_id: String,
 }
 
 impl MyIssuesWidget {
@@ -42,12 +49,14 @@ impl MyIssuesWidget {
         let variables = my_issues_query::Variables {};
         match client.query(MyIssuesQuery, variables).await {
             Ok(data) => {
-                self.state.write().unwrap().issues = data
-                    .issues
-                    .nodes
-                    .iter()
-                    .map(|issue| issue.to_owned().into())
-                    .collect();
+                self.state.write().unwrap().issue_map.insert(
+                    String::from("my_issues"),
+                    data.issues
+                        .nodes
+                        .iter()
+                        .map(|issue| issue.to_owned().into())
+                        .collect(),
+                );
                 self.state.write().unwrap().list_state.select(None);
             }
             Err(e) => {
@@ -64,17 +73,19 @@ impl MyIssuesWidget {
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
         let client = LinearClient::new(linear_api_token).unwrap();
         let variables = custom_view_query::Variables {
-            custom_view_id: view.id
+            custom_view_id: view.id.clone(),
         };
         match client.query(CustomViewQuery, variables).await {
             Ok(data) => {
-                self.state.write().unwrap().issues = data
-                    .custom_view
-                    .issues
-                    .nodes
-                    .iter()
-                    .map(|issue| issue.to_owned().into())
-                    .collect();
+                self.state.write().unwrap().issue_map.insert(
+                    view.id,
+                    data.custom_view
+                        .issues
+                        .nodes
+                        .iter()
+                        .map(|issue| issue.to_owned().into())
+                        .collect(),
+                );
                 self.state.write().unwrap().list_state.select(None);
             }
             Err(e) => {
@@ -95,8 +106,11 @@ impl MyIssuesWidget {
 
     pub fn scroll_down(&self) {
         let mut state = self.state.write().unwrap();
-        if let Some(index) = state.list_state.selected() {
-            if index >= state.issues.len() - 1 {
+        if let (Some(index), Some(map)) = (
+            state.list_state.selected(),
+            state.issue_map.get(&self.selected_view_id),
+        ) {
+            if index >= map.len() - 1 {
                 return state.list_state.select_first();
             }
         }
@@ -106,9 +120,12 @@ impl MyIssuesWidget {
     pub fn scroll_up(&self) {
         let mut state = self.state.write().unwrap();
 
-        match state.list_state.selected() {
-            Some(0) | None => {
-                let max_index = state.issues.len() - 1;
+        match (
+            state.list_state.selected(),
+            state.issue_map.get(&self.selected_view_id),
+        ) {
+            (Some(0) | None, Some(map)) => {
+                let max_index = map.len() - 1;
                 state.list_state.select(Some(max_index));
             }
             _ => state.list_state.select_previous(),
@@ -117,32 +134,40 @@ impl MyIssuesWidget {
 
     pub fn copy_branch_name(&self) {
         let state = self.state.read().unwrap();
-        if let Some(index) = state.list_state.selected() {
-            let selected_issue = &state.issues[index];
-            cli_clipboard::set_contents(selected_issue.branch_name.clone()).unwrap();
+        if let (Some(index), Some(map)) = (
+            state.list_state.selected(),
+            state.issue_map.get(&self.selected_view_id),
+        ) {
+            let branch_name = map[index].branch_name.clone();
+            cli_clipboard::set_contents(branch_name).unwrap();
         }
     }
 
     pub fn open_url(&self) -> std::result::Result<(), std::io::Error> {
         let state = self.state.read().unwrap();
-        if let Some(index) = state.list_state.selected() {
-            let selected_issue = &state.issues[index];
-            open::that(&selected_issue.url)
+        if let (Some(index), Some(map)) = (
+            state.list_state.selected(),
+            state.issue_map.get(&self.selected_view_id),
+        ) {
+            let url = map[index].url.clone();
+            open::that(&url)
         } else {
             Ok(())
         }
     }
 
-    pub fn run(&self, tab_change_event: TabChangeEvent) {
+    pub fn run(&mut self, tab_change_event: TabChangeEvent) {
         let this = self.clone();
         match tab_change_event {
             TabChangeEvent::FetchMyIssues => {
+                self.selected_view_id = String::from("my_issues");
                 tokio::spawn(this.fetch_my_issues());
-            },
+            }
             TabChangeEvent::FetchCustomViewIssues(view) => {
+                self.selected_view_id = view.id.clone();
                 tokio::spawn(this.fetch_custom_view(view));
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
 
@@ -162,7 +187,7 @@ impl MyIssuesWidget {
                         return LtEvent::SelectIssue;
                     }
                     KeyCode::Char('r') => {
-                        self.run(TabChangeEvent::FetchMyIssues);
+                        //self.run(TabChangeEvent::FetchMyIssues);
                         // TODO: Figure out how to get state to update better
                         return LtEvent::SelectIssue;
                     }
@@ -187,11 +212,10 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c100).fg(BLUE_GRAY.c900);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let mut block = Block::bordered()
-            .title_bottom(Line::from(vec![
-                Span::from(" <j/k> ").blue(),
-                Span::from("to select issue "),
-            ]));
+        let mut block = Block::bordered().title_bottom(Line::from(vec![
+            Span::from(" <j/k> ").blue(),
+            Span::from("to select issue "),
+        ]));
 
         if let LoadingState::Loading = self.get_loading_state() {
             block = block.title(Line::from("Loading…").right_aligned());
@@ -209,26 +233,32 @@ impl Widget for &MyIssuesWidget {
         }
         let mut state = self.state.write().unwrap();
         let area_width = area.width;
-        let rows = state.issues.iter().map(|item| {
-            let mut text = Text::default();
-            let priority_icon = iconmap::p_to_nf(item.priority);
-            let status_icon = iconmap::state_to_nf(&item.state.type_);
-            let identifier = item.identifier.clone();
-            // gives the effect of right aligning icons and left aligning the text
-            let spaces = (area_width as usize) - identifier.len() - 8;
-            let line = format!(
-                "{}{}{}  {}",
-                identifier.fg(AMBER.c700),
-                " ".repeat(spaces),
-                status_icon,
-                priority_icon
-            );
-            text.extend([
-                item.title.clone().white(),
-                line.add_modifier(Modifier::BOLD).blue(),
-            ]);
-            ListItem::new(text)
-        });
+        let rows: Vec<ListItem> = match state.issue_map.get(&self.selected_view_id) {
+            Some(issues) => issues
+                .iter()
+                .map(|item| {
+                    let mut text = Text::default();
+                    let priority_icon = iconmap::p_to_nf(item.priority);
+                    let status_icon = iconmap::state_to_nf(&item.state.type_);
+                    let identifier = item.identifier.clone();
+                    // gives the effect of right aligning icons and left aligning the text
+                    let spaces = (area_width as usize) - identifier.len() - 8;
+                    let line = format!(
+                        "{}{}{}  {}",
+                        identifier.fg(AMBER.c700),
+                        " ".repeat(spaces),
+                        status_icon,
+                        priority_icon
+                    );
+                    text.extend([
+                        item.title.clone().white(),
+                        line.add_modifier(Modifier::BOLD).blue(),
+                    ]);
+                    ListItem::new(text)
+                })
+                .collect(),
+            None => vec![],
+        };
 
         // tests can't see the highlighting
         let highlight_symbol = if cfg!(test) { ">" } else { "" };
@@ -243,14 +273,14 @@ impl Widget for &MyIssuesWidget {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, RwLock};
+    use std::{collections::HashMap, sync::{Arc, RwLock}};
 
     use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend, widgets::ListState};
 
     use crate::{
-        LtEvent, widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
+        widgets::{self, selected_issue::tests::make_issue, MyIssuesWidget}, LtEvent
     };
 
     fn create_key_event(key: char) -> crossterm::event::Event {
@@ -283,10 +313,11 @@ mod tests {
             make_issue("Ticket Two", "TEST-2"),
         ];
         let app = MyIssuesWidget {
+            selected_view_id: String::from("my_issues"),
             state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
                 loading_state: crate::LoadingState::Loaded,
                 list_state: ListState::default(),
-                issues,
+                issue_map: HashMap::from([(String::from("my_issues"), issues)]),
             })),
         };
         let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
