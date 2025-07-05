@@ -23,8 +23,14 @@
 * A `LINEAR_API_TOKEN` environment variable
    * [Generate API token here](https://linear.app/settings/account/security)
 
+**Homebrew (Mac)**
+```bash
+brew tap markmarkoh/lt
+brew install lt
+```
+
 **Cargo**  
-Currently you can install `lt` using cargo:
+You can install `lt` using cargo on any OS:
 ```bash
   cargo install lt
 ```
