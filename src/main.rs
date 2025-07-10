@@ -216,6 +216,7 @@ pub struct IssueFragmentState {
     from_type   to_type;
     [ custom_view_query::IssueFragmentState ] [ IssueFragmentState ];
     [ my_issues_query::IssueFragmentState ] [ IssueFragmentState ];
+    [ search_query::IssueFragmentState ] [ IssueFragmentState ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -239,6 +240,7 @@ pub struct IssueFragmentAssignee {
     from_type   to_type;
     [ custom_view_query::IssueFragmentAssignee ] [ IssueFragmentAssignee ];
     [ my_issues_query::IssueFragmentAssignee ] [ IssueFragmentAssignee ];
+    [ search_query::IssueFragmentAssignee ] [ IssueFragmentAssignee ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -261,6 +263,7 @@ pub struct IssueFragmentCreator {
     from_type   to_type;
     [ custom_view_query::IssueFragmentCreator ] [ IssueFragmentCreator ];
     [ my_issues_query::IssueFragmentCreator ] [ IssueFragmentCreator ];
+    [ search_query::IssueFragmentCreator ] [ IssueFragmentCreator ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -282,6 +285,7 @@ pub struct IssueFragmentProject {
     from_type   to_type;
     [ custom_view_query::IssueFragmentProject ] [ IssueFragmentProject ];
     [ my_issues_query::IssueFragmentProject ] [ IssueFragmentProject ];
+    [ search_query::IssueFragmentProject ] [ IssueFragmentProject ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -302,6 +306,7 @@ pub struct IssueFragmentLabels {
     from_type   to_type;
     [ custom_view_query::IssueFragmentLabels ] [ IssueFragmentLabels ];
     [ my_issues_query::IssueFragmentLabels ] [ IssueFragmentLabels ];
+    [ search_query::IssueFragmentLabels ] [ IssueFragmentLabels ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -324,6 +329,7 @@ pub struct IssueFragmentLabelsEdges {
     from_type   to_type;
     [ custom_view_query::IssueFragmentLabelsEdges ] [ IssueFragmentLabelsEdges ];
     [ my_issues_query::IssueFragmentLabelsEdges ] [ IssueFragmentLabelsEdges ];
+    [ search_query::IssueFragmentLabelsEdges ] [ IssueFragmentLabelsEdges ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -343,6 +349,7 @@ pub struct IssueFragmentLabelsEdgesNode {
     from_type   to_type;
     [ custom_view_query::IssueFragmentLabelsEdgesNode ] [ IssueFragmentLabelsEdgesNode ];
     [ my_issues_query::IssueFragmentLabelsEdgesNode ] [ IssueFragmentLabelsEdgesNode ];
+    [ search_query::IssueFragmentLabelsEdgesNode ] [ IssueFragmentLabelsEdgesNode ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
