@@ -2,6 +2,7 @@ mod api;
 mod iconmap;
 mod queries;
 mod widgets;
+use duplicate::duplicate_item;
 use serde::{Deserialize, Serialize};
 use widgets::{MyIssuesWidget, SelectedIssueWidget, TabWidget};
 
@@ -177,29 +178,13 @@ pub struct IssueFragment {
     pub description: Option<String>,
 }
 
-impl From<my_issues_query::IssueFragment> for IssueFragment {
-    fn from(item: my_issues_query::IssueFragment) -> Self {
-        Self {
-            title: item.title,
-            identifier: item.identifier,
-            url: item.url,
-            estimate: item.estimate,
-            state: item.state.into(),
-            created_at: item.created_at,
-            priority: item.priority,
-            priority_label: item.priority_label,
-            branch_name: item.branch_name,
-            description: item.description,
-            labels: item.labels.into(),
-            assignee: item.assignee.map(|assignee| assignee.into()),
-            creator: item.creator.map(|creator| creator.into()),
-            project: item.project.map(|project| project.into()),
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragment> for IssueFragment {
-    fn from(item: custom_view_query::IssueFragment) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragment] [ IssueFragment ];
+    [ my_issues_query::IssueFragment] [ IssueFragment ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             title: item.title,
             identifier: item.identifier,
@@ -227,18 +212,13 @@ pub struct IssueFragmentState {
     pub type_: String,
 }
 
-impl From<my_issues_query::IssueFragmentState> for IssueFragmentState {
-    fn from(item: my_issues_query::IssueFragmentState) -> Self {
-        Self {
-            name: item.name,
-            color: item.color,
-            type_: item.type_,
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentState> for IssueFragmentState {
-    fn from(item: custom_view_query::IssueFragmentState) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentState ] [ IssueFragmentState ];
+    [ my_issues_query::IssueFragmentState ] [ IssueFragmentState ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             name: item.name,
             color: item.color,
@@ -255,17 +235,13 @@ pub struct IssueFragmentAssignee {
     pub display_name: String,
 }
 
-impl From<my_issues_query::IssueFragmentAssignee> for IssueFragmentAssignee {
-    fn from(item: my_issues_query::IssueFragmentAssignee) -> Self {
-        Self {
-            is_me: item.is_me,
-            display_name: item.display_name,
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentAssignee> for IssueFragmentAssignee {
-    fn from(item: custom_view_query::IssueFragmentAssignee) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentAssignee ] [ IssueFragmentAssignee ];
+    [ my_issues_query::IssueFragmentAssignee ] [ IssueFragmentAssignee ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             is_me: item.is_me,
             display_name: item.display_name,
@@ -281,17 +257,13 @@ pub struct IssueFragmentCreator {
     pub display_name: String,
 }
 
-impl From<my_issues_query::IssueFragmentCreator> for IssueFragmentCreator {
-    fn from(item: my_issues_query::IssueFragmentCreator) -> Self {
-        Self {
-            is_me: item.is_me,
-            display_name: item.display_name,
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentCreator> for IssueFragmentCreator {
-    fn from(item: custom_view_query::IssueFragmentCreator) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentCreator ] [ IssueFragmentCreator ];
+    [ my_issues_query::IssueFragmentCreator ] [ IssueFragmentCreator ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             is_me: item.is_me,
             display_name: item.display_name,
@@ -306,18 +278,13 @@ pub struct IssueFragmentProject {
     pub color: String,
 }
 
-impl From<my_issues_query::IssueFragmentProject> for IssueFragmentProject {
-    fn from(item: my_issues_query::IssueFragmentProject) -> Self {
-        Self {
-            name: item.name,
-            icon: item.icon,
-            color: item.color,
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentProject> for IssueFragmentProject {
-    fn from(item: custom_view_query::IssueFragmentProject) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentProject ] [ IssueFragmentProject ];
+    [ my_issues_query::IssueFragmentProject ] [ IssueFragmentProject ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             name: item.name,
             icon: item.icon,
@@ -331,20 +298,13 @@ pub struct IssueFragmentLabels {
     pub edges: Vec<IssueFragmentLabelsEdges>,
 }
 
-impl From<my_issues_query::IssueFragmentLabels> for IssueFragmentLabels {
-    fn from(item: my_issues_query::IssueFragmentLabels) -> Self {
-        Self {
-            edges: item
-                .edges
-                .iter()
-                .map(|edge| edge.to_owned().into())
-                .collect(),
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentLabels> for IssueFragmentLabels {
-    fn from(item: custom_view_query::IssueFragmentLabels) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentLabels ] [ IssueFragmentLabels ];
+    [ my_issues_query::IssueFragmentLabels ] [ IssueFragmentLabels ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             edges: item
                 .edges
@@ -360,16 +320,13 @@ pub struct IssueFragmentLabelsEdges {
     pub node: IssueFragmentLabelsEdgesNode,
 }
 
-impl From<my_issues_query::IssueFragmentLabelsEdges> for IssueFragmentLabelsEdges {
-    fn from(item: my_issues_query::IssueFragmentLabelsEdges) -> Self {
-        Self {
-            node: item.node.into(),
-        }
-    }
-}
-
-impl From<custom_view_query::IssueFragmentLabelsEdges> for IssueFragmentLabelsEdges {
-    fn from(item: custom_view_query::IssueFragmentLabelsEdges) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentLabelsEdges ] [ IssueFragmentLabelsEdges ];
+    [ my_issues_query::IssueFragmentLabelsEdges ] [ IssueFragmentLabelsEdges ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             node: item.node.into(),
         }
@@ -382,8 +339,13 @@ pub struct IssueFragmentLabelsEdgesNode {
     pub name: String,
 }
 
-impl From<my_issues_query::IssueFragmentLabelsEdgesNode> for IssueFragmentLabelsEdgesNode {
-    fn from(item: my_issues_query::IssueFragmentLabelsEdgesNode) -> Self {
+#[duplicate_item(
+    from_type   to_type;
+    [ custom_view_query::IssueFragmentLabelsEdgesNode ] [ IssueFragmentLabelsEdgesNode ];
+    [ my_issues_query::IssueFragmentLabelsEdgesNode ] [ IssueFragmentLabelsEdgesNode ];
+)]
+impl From<from_type> for to_type {
+    fn from(item: from_type) -> Self {
         Self {
             color: item.color,
             name: item.name,
@@ -391,11 +353,4 @@ impl From<my_issues_query::IssueFragmentLabelsEdgesNode> for IssueFragmentLabels
     }
 }
 
-impl From<custom_view_query::IssueFragmentLabelsEdgesNode> for IssueFragmentLabelsEdgesNode {
-    fn from(item: custom_view_query::IssueFragmentLabelsEdgesNode) -> Self {
-        Self {
-            color: item.color,
-            name: item.name,
-        }
-    }
-}
+
