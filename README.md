@@ -1,9 +1,10 @@
 # `lt` (ell-tee)
+
+`lt` is a simple TUI application to view issues from [linear.app](https://linear.app/), for those of us still in love with the terminal. `lt` is read-only at the moment.
+
 <img width="900" alt="Basic intro page for lt" src="https://github.com/user-attachments/assets/dd29d164-4ec8-4bb6-b469-667680b2d739" />
 <img width="900" alt="Search results activated" src="https://github.com/user-attachments/assets/62d426a3-fe34-4eb2-a44a-0e53da1e03e9" />
 <img width="900" alt="lt on a light themed terminal" src="https://github.com/user-attachments/assets/7a878054-5b99-4fce-8b4e-bcdb2e75f335" />
-
-`lt` is a simple TUI application to view issues from [linear.app](https://linear.app/), for those of us still in love with the terminal. `lt` is read-only at the moment.
 
 ### Features
 * View "My Issues", and the issue description, project, priority, status, tags, assignee, creator  
