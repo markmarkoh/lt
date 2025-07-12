@@ -206,6 +206,7 @@ impl MyIssuesWidget {
 
     pub fn run(&self, tab_change_event: TabChangeEvent) {
         let this = self.clone();
+        //println!("Tab {:#?}", tab_change_event);
         match tab_change_event {
             TabChangeEvent::FetchMyIssues => {
                 tokio::spawn(this.fetch_my_issues());
@@ -213,8 +214,8 @@ impl MyIssuesWidget {
             TabChangeEvent::FetchCustomViewIssues(view) => {
                 tokio::spawn(this.fetch_custom_view(view));
             }
-            TabChangeEvent::SearchIssues(term) => {
-                tokio::spawn(this.search_issues(term));
+            TabChangeEvent::SearchIssues => {
+                self.set_selected_view(String::from("search_results"));
             }
             _ => (),
         }
@@ -374,10 +375,10 @@ mod tests {
     use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend, widgets::ListState};
+    use tui_input::Input;
 
     use crate::{
-        LtEvent,
-        widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
+        widgets::{self, selected_issue::tests::make_issue, MyIssuesWidget}, InputMode, LtEvent
     };
 
     fn create_key_event(key: char) -> crossterm::event::Event {
@@ -391,7 +392,7 @@ mod tests {
 
     #[test]
     fn test_empty_state() {
-        let app = MyIssuesWidget::default();
+        let mut app = MyIssuesWidget::default();
         let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
@@ -409,12 +410,14 @@ mod tests {
             make_issue("Ticket One", "TEST-1"),
             make_issue("Ticket Two", "TEST-2"),
         ];
-        let app = MyIssuesWidget {
-            selected_view_id: String::from("my_issues"),
+        let mut app = MyIssuesWidget {
             show_search_input: false,
+            input: Input::default(),
+            input_mode: InputMode::Normal,
             search_input_value: String::from(""),
             state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
                 loading_state: crate::LoadingState::Loaded,
+                selected_view_id: String::from("my_issues"),
                 list_state: ListState::default(),
                 issue_map: HashMap::from([(String::from("my_issues"), issues)]),
             })),

@@ -55,7 +55,7 @@ pub enum LtEvent<'a> {
 pub enum TabChangeEvent {
     None,
     FetchCustomViewIssues(custom_views_query::ViewFragment),
-    SearchIssues(String),
+    SearchIssues,
     FetchMyIssues,
 }
 
@@ -153,10 +153,9 @@ impl App {
                                 self.selected_issue_widget
                                     .set_selected_issue(selected_issue);
                             }
-                            /*LtEvent::SearchIssues(term) => {
-                                self.issue_list_widget
-                                    .run(TabChangeEvent::SearchIssues(String::from(term)));
-                            }*/
+                            LtEvent::SearchIssues(term) => {
+                                self.tab_widget.show_and_select_search_tab();
+                            }
                             _ => (),
                         }
                     }

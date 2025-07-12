@@ -21,6 +21,7 @@ pub fn ico_to_nf(name: &str) -> String {
         "Android" => " ",
         "Page" => "󰈙 ",
         "Robot" => " ",
+        "Magnify" => " ",
         "Chat" => "󰭹 ",
         "LightBulb" => "󰌵 ",
         "Alert" => "󰀨 ",
