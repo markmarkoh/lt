@@ -206,7 +206,6 @@ impl MyIssuesWidget {
 
     pub fn run(&self, tab_change_event: TabChangeEvent) {
         let this = self.clone();
-        //println!("Tab {:#?}", tab_change_event);
         match tab_change_event {
             TabChangeEvent::FetchMyIssues => {
                 tokio::spawn(this.fetch_my_issues());
@@ -350,17 +349,7 @@ impl Widget for &MyIssuesWidget {
             let input = Paragraph::new(value)
                 .style(Color::Yellow)
                 .block(block2);
-            // Do I need to store this at the parent level so I can pass events via handle_event?
-            /*let mut search_input = TextArea::new(vec![self.search_input_value.clone()]);
-            search_input.set_cursor_line_style(Style::default());
-            search_input.set_placeholder_text("Search here");
-            search_input.set_block(block2);
-            search_input.render(search_area, buf);*/
             input.render(search_area, buf);
-            // Ratatui hides the cursor unless it's explicitly set. Position the  cursor past the
-            // end of the input text and one line down from the border to the input line
-            //let x = self.input.visual_cursor().max(scroll) - scroll + 1;
-            //.set_cursor_position((search_area.x + x as u16, search_area.y + 1));
         }
     }
 }
@@ -452,7 +441,21 @@ mod tests {
         assert_eq!(app.state.read().unwrap().list_state.selected(), Some(1));
 
         // test that <y> yanks the branch name to the clipboard
-        app.handle_event(&create_key_event('y'));
-        assert_eq!(cli_clipboard::get_contents().unwrap(), "test-1-branch-name");
+        // disabling because CI can't run this
+        //app.handle_event(&create_key_event('y'));
+        //assert_eq!(cli_clipboard::get_contents().unwrap(), "test-1-branch-name");
+
+        assert!(!app.show_search_input);
+        assert_eq!(app.input_mode, InputMode::Normal);
+        app.toggle_search_mode();
+        assert!(app.show_search_input);
+        assert_eq!(app.input_mode, InputMode::Editing);
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+        assert_snapshot!(terminal.backend());
+        app.toggle_search_mode();
+        assert!(!app.show_search_input);
+        assert_eq!(app.input_mode, InputMode::Normal);
     }
 }
