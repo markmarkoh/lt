@@ -134,7 +134,7 @@ impl TabWidget {
                                 return match state.tabs[index].tab_type {
                                     TabType::MyIssues => TabChangeEvent::FetchMyIssues,
                                     TabType::SearchResults => TabChangeEvent::SearchIssues,
-                                    _ => TabChangeEvent::None
+                                    _ => TabChangeEvent::None,
                                 };
                             }
                         }
@@ -150,7 +150,7 @@ impl TabWidget {
                                 return match state.tabs[state.selected_index].tab_type {
                                     TabType::MyIssues => TabChangeEvent::FetchMyIssues,
                                     TabType::SearchResults => TabChangeEvent::SearchIssues,
-                                    _ => TabChangeEvent::None
+                                    _ => TabChangeEvent::None,
                                 };
                             }
                         }
@@ -219,7 +219,11 @@ mod tests {
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend};
 
-    use crate::{queries::custom_views_query, widgets::{tab_widget::TabType, TabWidget}, TabChangeEvent};
+    use crate::{
+        TabChangeEvent,
+        queries::custom_views_query,
+        widgets::{TabWidget, tab_widget::TabType},
+    };
 
     use super::{Tab, TabWidgetState};
 

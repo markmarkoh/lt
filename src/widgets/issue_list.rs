@@ -20,9 +20,14 @@ use tui_input::backend::crossterm::EventHandler;
 use std::collections::HashMap;
 
 use crate::{
-    api::LinearClient, iconmap, queries::{
-        custom_view_query, custom_views_query, my_issues_query::{self}, search_query, CustomViewQuery, MyIssuesQuery, SearchQuery
-    }, InputMode, IssueFragment, LoadingState, LtEvent, TabChangeEvent
+    InputMode, IssueFragment, LoadingState, LtEvent, TabChangeEvent,
+    api::LinearClient,
+    iconmap,
+    queries::{
+        CustomViewQuery, MyIssuesQuery, SearchQuery, custom_view_query, custom_views_query,
+        my_issues_query::{self},
+        search_query,
+    },
 };
 
 #[derive(Debug, Default)]
@@ -107,7 +112,7 @@ impl MyIssuesWidget {
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
         let client = LinearClient::new(linear_api_token).unwrap();
         let variables = search_query::Variables {
-            term: search_term.to_string()
+            term: search_term.to_string(),
         };
         match client.query(SearchQuery, variables).await {
             Ok(data) => {
@@ -226,7 +231,7 @@ impl MyIssuesWidget {
         }
         if let Event::Key(key) = event {
             if key.kind == KeyEventKind::Press {
-                use InputMode::{Normal, Editing};
+                use InputMode::{Editing, Normal};
 
                 match (self.input_mode.clone(), key.code) {
                     (Normal, KeyCode::Char('j')) => {
@@ -346,9 +351,7 @@ impl Widget for &MyIssuesWidget {
             } else {
                 self.input.value().to_string()
             };
-            let input = Paragraph::new(value)
-                .style(Color::Yellow)
-                .block(block2);
+            let input = Paragraph::new(value).style(Color::Yellow).block(block2);
             input.render(search_area, buf);
         }
     }
@@ -367,7 +370,8 @@ mod tests {
     use tui_input::Input;
 
     use crate::{
-        widgets::{self, selected_issue::tests::make_issue, MyIssuesWidget}, InputMode, LtEvent
+        InputMode, LtEvent,
+        widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
     };
 
     fn create_key_event(key: char) -> crossterm::event::Event {
