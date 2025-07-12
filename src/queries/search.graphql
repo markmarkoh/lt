@@ -1,0 +1,45 @@
+fragment IssueFragment on IssueSearchResult {
+      title
+      identifier
+      state {
+        name
+        color
+        type
+      }
+      url
+      assignee {
+        isMe
+        displayName
+      }
+      creator {
+        isMe
+        displayName
+      }
+      estimate
+      project {
+        name
+        icon
+        color
+      }
+      createdAt
+      priorityLabel
+      priority
+      labels {
+        edges {
+          node {
+            color
+            name
+          }
+        }
+      }
+      branchName
+      description
+}
+
+query SearchQuery($term: String!) {
+  searchIssues(term: $term) {
+    nodes {
+      ...IssueFragment
+    }
+  }
+}

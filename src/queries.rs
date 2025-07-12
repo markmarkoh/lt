@@ -27,5 +27,15 @@ pub struct CustomViewsQuery;
 pub struct CustomViewQuery;
 
 
+#[derive(Debug, Default, GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schemas/linear.graphql",
+    query_path = "src/queries/search.graphql",
+    response_derives = "serde::Serialize,Default,Debug,Clone"
+)]
+pub struct SearchQuery;
+
+
+
 
 

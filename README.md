@@ -8,12 +8,13 @@
 * Press `y` to yank (copy) the git branch name to the clipboard
 * Press `o` to open the full issue in Linear desktop or web, whichever you have installed.
 * **New in 0.0.4**: View switcher (`Tab`/`Shift+Tab`) - switch between custom views as defined in your Linear app
+* **New in 0.0.6**: Now available to install view Homebrew (see **Installation**)
+* **New in 0.0.7**: Search issues (`/`) - search all issues by simple search term
   
 ### Planned Features
 * Faster loading via cacheing
 * Richer markdown presentation
-* Tighter local git integration
-* Brew/Packager Manager installation
+* Brew/Packager Manager installation improvements
 
 
 ### Installation
