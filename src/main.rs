@@ -153,7 +153,7 @@ impl App {
                                 self.selected_issue_widget
                                     .set_selected_issue(selected_issue);
                             }
-                            LtEvent::SearchIssues(term) => {
+                            LtEvent::SearchIssues(_) => {
                                 self.tab_widget.show_and_select_search_tab();
                             }
                             _ => (),

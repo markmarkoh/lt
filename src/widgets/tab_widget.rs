@@ -112,13 +112,6 @@ impl TabWidget {
         state.selected_index = state.tabs.len() - 1;
     }
 
-    pub fn hide_search_tab(&self) {
-        let mut state = self.state.write().unwrap();
-        if state.tabs[state.selected_index].tab_type == TabType::SearchResults {
-            state.tabs.pop();
-        }
-    }
-
     pub fn handle_event(&self, event: &Event) -> crate::TabChangeEvent {
         if let Event::Key(key) = event {
             if key.kind == KeyEventKind::Press {
