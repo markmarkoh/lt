@@ -131,6 +131,9 @@ impl App {
                     (KeyCode::Tab | KeyCode::BackTab, _) => {
                         self.issue_list_widget
                             .run(self.tab_widget.handle_event(event));
+                        if self.issue_list_widget.show_search_input {
+                            self.issue_list_widget.toggle_search_mode();
+                        }
                     }
                     (KeyCode::Char('/'), InputMode::Normal) => {
                         self.issue_list_widget.toggle_search_mode();
