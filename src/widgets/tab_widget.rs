@@ -31,9 +31,16 @@ impl Default for TabWidget {
         TabWidget {
             state: Arc::new(RwLock::new(TabWidgetState {
                 selected_index: 0,
-                tabs: vec![Tab {
+                tabs: vec![
+                    Tab {
+                        title: String::from("Search Results"),
+                        custom_view: None,
+                        visible: false,
+                    }
+                    ,Tab {
                     title: String::from("My Issues"),
                     custom_view: None,
+                    visible: true,
                 }],
             })),
         }
@@ -44,6 +51,7 @@ impl Default for TabWidget {
 struct Tab {
     title: String,
     custom_view: Option<custom_views_query::ViewFragment>,
+    visible: bool
 }
 
 impl TabWidget {
@@ -63,6 +71,7 @@ impl TabWidget {
                 for custom_view in data.custom_views.nodes.iter() {
                     state.tabs.push(Tab {
                         title: custom_view.name.clone(),
+                        visible: true,
                         custom_view: Some(custom_view.clone()),
                     });
                 }
@@ -136,7 +145,10 @@ impl Widget for &TabWidget {
                 .unwrap()
                 .tabs
                 .iter()
-                .map(|tab| {
+                .filter_map(|tab| {
+                    if !tab.visible {
+                        return None
+                    }
                     let (icon, color) = if let Some(view) = &tab.custom_view {
                         (
                             match &view.icon {
@@ -152,7 +164,7 @@ impl Widget for &TabWidget {
                         (iconmap::ico_to_nf("Home"), String::from("#FFFFFF"))
                     };
                     let project_color = Color::from_str(&color).unwrap();
-                    Span::from(format!("{} {}", icon, tab.title.clone().bold())).fg(project_color).bold()
+                    Some(Span::from(format!("{} {}", icon, tab.title.clone().bold())).fg(project_color).bold())
                 })
                 .collect::<Vec<Span>>(),
         )

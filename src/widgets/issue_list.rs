@@ -3,46 +3,49 @@ use std::sync::{Arc, RwLock};
 use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
+    layout::{Constraint, Layout, Rect},
     style::{
-        Modifier, Style, Stylize,
+        Color, Modifier, Style, Stylize,
         palette::{
             material::{AMBER, BLUE_GRAY},
             tailwind::SLATE,
         },
     },
     text::{Line, Span, Text},
-    widgets::{Block, List, ListItem, ListState, Paragraph, StatefulWidget, Widget, Wrap},
+    widgets::{Block, List, ListItem, ListState, Padding, Paragraph, StatefulWidget, Widget, Wrap},
 };
+use tui_input::Input;
+use tui_input::backend::crossterm::EventHandler;
 
 use std::collections::HashMap;
 
 use crate::{
-    IssueFragment, LoadingState, LtEvent, TabChangeEvent,
-    api::LinearClient,
-    iconmap,
-    queries::{
-        CustomViewQuery, MyIssuesQuery, custom_view_query, custom_views_query,
-        my_issues_query::{self},
-    },
+    api::LinearClient, iconmap, queries::{
+        custom_view_query, custom_views_query, my_issues_query::{self}, search_query, CustomViewQuery, MyIssuesQuery, SearchQuery
+    }, InputMode, IssueFragment, LoadingState, LtEvent, TabChangeEvent
 };
 
 #[derive(Debug, Default)]
 pub struct MyIssuesWidgetState {
     loading_state: LoadingState,
     pub list_state: ListState,
+    pub selected_view_id: String,
     pub issue_map: HashMap<String, Vec<IssueFragment>>,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct MyIssuesWidget {
     pub state: Arc<RwLock<MyIssuesWidgetState>>,
-    pub selected_view_id: String,
+    input: Input,
+    pub search_input_value: String,
+    pub show_search_input: bool,
+    pub input_mode: InputMode,
 }
 
 impl MyIssuesWidget {
     async fn fetch_my_issues(self) {
         self.set_loading_state(LoadingState::Loading);
+        self.set_selected_view(String::from("my_issues"));
         let linear_api_token =
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
         let client = LinearClient::new(linear_api_token).unwrap();
@@ -69,6 +72,7 @@ impl MyIssuesWidget {
 
     async fn fetch_custom_view(self, view: custom_views_query::ViewFragment) {
         self.set_loading_state(LoadingState::Loading);
+        self.set_selected_view(view.id.clone());
         let linear_api_token =
             std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
         let client = LinearClient::new(linear_api_token).unwrap();
@@ -96,6 +100,50 @@ impl MyIssuesWidget {
         self.set_loading_state(LoadingState::Loaded);
     }
 
+    async fn search_issues(self, search_term: String) {
+        self.set_loading_state(LoadingState::Loading);
+        self.set_selected_view(String::from("search_results"));
+        let linear_api_token =
+            std::env::var("LINEAR_API_TOKEN").expect("Missing LINEAR_API_TOKEN env var");
+        let client = LinearClient::new(linear_api_token).unwrap();
+        let variables = search_query::Variables {
+            term: search_term.to_string()
+        };
+        match client.query(SearchQuery, variables).await {
+            Ok(data) => {
+                self.state.write().unwrap().issue_map.insert(
+                    "search_results".to_string(),
+                    data.search_issues
+                        .nodes
+                        .iter()
+                        .map(|issue| issue.to_owned().into())
+                        .collect(),
+                );
+                self.state.write().unwrap().list_state.select(None);
+            }
+            Err(e) => {
+                self.set_loading_state(LoadingState::Error(e.to_string()));
+                return;
+            }
+        }
+        self.set_loading_state(LoadingState::Loaded);
+    }
+
+    pub fn toggle_search_mode(&mut self) {
+        if self.show_search_input {
+            self.show_search_input = false;
+            self.input_mode = InputMode::Normal;
+        } else {
+            self.show_search_input = true;
+            self.input.reset();
+            self.input_mode = InputMode::Editing;
+        }
+    }
+
+    fn set_selected_view(&self, id: String) {
+        self.state.write().unwrap().selected_view_id = id;
+    }
+
     fn set_loading_state(&self, state: LoadingState) {
         self.state.write().unwrap().loading_state = state;
     }
@@ -108,7 +156,7 @@ impl MyIssuesWidget {
         let mut state = self.state.write().unwrap();
         if let (Some(index), Some(map)) = (
             state.list_state.selected(),
-            state.issue_map.get(&self.selected_view_id),
+            state.issue_map.get(&state.selected_view_id),
         ) {
             if index >= map.len() - 1 {
                 return state.list_state.select_first();
@@ -122,7 +170,7 @@ impl MyIssuesWidget {
 
         match (
             state.list_state.selected(),
-            state.issue_map.get(&self.selected_view_id),
+            state.issue_map.get(&state.selected_view_id),
         ) {
             (Some(0) | None, Some(map)) => {
                 let max_index = map.len() - 1;
@@ -136,7 +184,7 @@ impl MyIssuesWidget {
         let state = self.state.read().unwrap();
         if let (Some(index), Some(map)) = (
             state.list_state.selected(),
-            state.issue_map.get(&self.selected_view_id),
+            state.issue_map.get(&state.selected_view_id),
         ) {
             let branch_name = map[index].branch_name.clone();
             cli_clipboard::set_contents(branch_name).unwrap();
@@ -147,7 +195,7 @@ impl MyIssuesWidget {
         let state = self.state.read().unwrap();
         if let (Some(index), Some(map)) = (
             state.list_state.selected(),
-            state.issue_map.get(&self.selected_view_id),
+            state.issue_map.get(&state.selected_view_id),
         ) {
             let url = map[index].url.clone();
             open::that(&url)
@@ -156,42 +204,57 @@ impl MyIssuesWidget {
         }
     }
 
-    pub fn run(&mut self, tab_change_event: TabChangeEvent) {
+    pub fn run(&self, tab_change_event: TabChangeEvent) {
         let this = self.clone();
         match tab_change_event {
             TabChangeEvent::FetchMyIssues => {
-                self.selected_view_id = String::from("my_issues");
                 tokio::spawn(this.fetch_my_issues());
             }
             TabChangeEvent::FetchCustomViewIssues(view) => {
-                self.selected_view_id = view.id.clone();
                 tokio::spawn(this.fetch_custom_view(view));
+            }
+            TabChangeEvent::SearchIssues(term) => {
+                tokio::spawn(this.search_issues(term));
             }
             _ => (),
         }
     }
 
-    pub fn handle_event(&self, event: &Event) -> LtEvent {
+    pub fn handle_event(&mut self, event: &Event) -> LtEvent {
         if self.get_loading_state() != LoadingState::Loaded {
             return LtEvent::None;
         }
         if let Event::Key(key) = event {
             if key.kind == KeyEventKind::Press {
-                match key.code {
-                    KeyCode::Char('j') => {
+                use InputMode::{Normal, Editing};
+
+                match (self.input_mode.clone(), key.code) {
+                    (Normal, KeyCode::Char('j')) => {
                         self.scroll_down();
                         return LtEvent::SelectIssue;
                     }
-                    KeyCode::Char('k') => {
+                    (Normal, KeyCode::Char('k')) => {
                         self.scroll_up();
                         return LtEvent::SelectIssue;
                     }
-                    KeyCode::Char('o') => {
+                    (Normal, KeyCode::Char('o')) => {
                         let _ = self.open_url();
                         return LtEvent::None;
                     }
-                    KeyCode::Char('c') | KeyCode::Char('y') => {
+                    (Normal, KeyCode::Char('c') | KeyCode::Char('y')) => {
                         self.copy_branch_name();
+                        return LtEvent::None;
+                    }
+                    (Editing, KeyCode::Enter) => {
+                        self.input_mode = InputMode::Normal;
+                        // tab?
+                        tokio::spawn(self.clone().search_issues(String::from(self.input.value())));
+                        return LtEvent::SearchIssues(self.input.value());
+                    }
+                    (Editing, _) => {
+                        if self.show_search_input {
+                            self.input.handle_event(event);
+                        }
                         return LtEvent::None;
                     }
                     _ => {
@@ -207,6 +270,18 @@ const SELECTED_STYLE: Style = Style::new().bg(SLATE.c100).fg(BLUE_GRAY.c900);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        use Constraint::{Length, Min};
+
+        let (search_area, body_area): (Option<Rect>, Rect) = {
+            if self.show_search_input {
+                let vertical = Layout::vertical([Length(3), Min(0)]);
+                let [search_area, body_area] = vertical.areas(area);
+                (Some(search_area), body_area)
+            } else {
+                (None, area)
+            }
+        };
+
         let mut block = Block::bordered().title_bottom(Line::from(vec![
             Span::from(" <j/k> ").blue(),
             Span::from("to select issue "),
@@ -228,7 +303,7 @@ impl Widget for &MyIssuesWidget {
         }
         let mut state = self.state.write().unwrap();
         let area_width = area.width;
-        let rows: Vec<ListItem> = match state.issue_map.get(&self.selected_view_id) {
+        let rows: Vec<ListItem> = match state.issue_map.get(&state.selected_view_id) {
             Some(issues) => issues
                 .iter()
                 .map(|item| {
@@ -262,20 +337,47 @@ impl Widget for &MyIssuesWidget {
             .highlight_style(SELECTED_STYLE)
             .highlight_symbol(highlight_symbol)
             .block(block);
-        StatefulWidget::render(list, area, buf, &mut state.list_state);
+        StatefulWidget::render(list, body_area, buf, &mut state.list_state);
+
+        if let Some(search_area) = search_area {
+            let block2 = Block::bordered().padding(Padding::ZERO);
+            let value = if self.input_mode == InputMode::Editing {
+                (self.input.value().to_owned() + "|").to_owned()
+            } else {
+                self.input.value().to_string()
+            };
+            let input = Paragraph::new(value)
+                .style(Color::Yellow)
+                .block(block2);
+            // Do I need to store this at the parent level so I can pass events via handle_event?
+            /*let mut search_input = TextArea::new(vec![self.search_input_value.clone()]);
+            search_input.set_cursor_line_style(Style::default());
+            search_input.set_placeholder_text("Search here");
+            search_input.set_block(block2);
+            search_input.render(search_area, buf);*/
+            input.render(search_area, buf);
+            // Ratatui hides the cursor unless it's explicitly set. Position the  cursor past the
+            // end of the input text and one line down from the border to the input line
+            //let x = self.input.visual_cursor().max(scroll) - scroll + 1;
+            //.set_cursor_position((search_area.x + x as u16, search_area.y + 1));
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, sync::{Arc, RwLock}};
+    use std::{
+        collections::HashMap,
+        sync::{Arc, RwLock},
+    };
 
     use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
     use insta::assert_snapshot;
     use ratatui::{Terminal, backend::TestBackend, widgets::ListState};
 
     use crate::{
-        widgets::{self, selected_issue::tests::make_issue, MyIssuesWidget}, LtEvent
+        LtEvent,
+        widgets::{self, MyIssuesWidget, selected_issue::tests::make_issue},
     };
 
     fn create_key_event(key: char) -> crossterm::event::Event {
@@ -309,6 +411,8 @@ mod tests {
         ];
         let app = MyIssuesWidget {
             selected_view_id: String::from("my_issues"),
+            show_search_input: false,
+            search_input_value: String::from(""),
             state: Arc::new(RwLock::new(widgets::issue_list::MyIssuesWidgetState {
                 loading_state: crate::LoadingState::Loaded,
                 list_state: ListState::default(),

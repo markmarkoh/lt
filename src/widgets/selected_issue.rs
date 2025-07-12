@@ -2,9 +2,6 @@ use crate::IssueFragment;
 use crate::LtEvent;
 use crate::iconmap;
 
-use crossterm::event::Event;
-use crossterm::event::KeyCode;
-use crossterm::event::KeyEventKind;
 use ratatui::style::Modifier;
 use ratatui::style::Style;
 use ratatui::style::palette::tailwind::SLATE;
@@ -19,6 +16,7 @@ use std::sync::{Arc, RwLock};
 
 use chrono::DateTime;
 
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::buffer::Buffer;
 use ratatui::{
     layout::{Constraint, Layout, Rect},

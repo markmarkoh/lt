@@ -2,11 +2,11 @@ mod api;
 mod iconmap;
 mod queries;
 mod widgets;
+use crossterm::event::EventStream;
 use duplicate::duplicate_item;
 use serde::{Deserialize, Serialize};
 use widgets::{MyIssuesWidget, SelectedIssueWidget, TabWidget};
 
-use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind};
 use std::{
     fmt::{self},
     time::Duration,
@@ -14,6 +14,7 @@ use std::{
 
 use color_eyre::eyre::Result;
 
+use crossterm::event::{Event, KeyCode, KeyEventKind};
 use queries::*;
 use ratatui::{
     DefaultTerminal, Frame,
@@ -35,17 +36,26 @@ async fn main() -> Result<()> {
     app_result
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub enum InputMode {
+    #[default]
+    Normal,
+    Editing,
+}
+
 /* Events for widget communication */
 #[derive(Debug, PartialEq)]
-pub enum LtEvent {
+pub enum LtEvent<'a> {
     None,
     SelectIssue,
+    SearchIssues(&'a str),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum TabChangeEvent {
     None,
     FetchCustomViewIssues(custom_views_query::ViewFragment),
+    SearchIssues(String),
     FetchMyIssues,
 }
 
@@ -113,27 +123,41 @@ impl App {
     fn handle_event(&mut self, event: &Event) {
         if let Event::Key(key) = event {
             if key.kind == KeyEventKind::Press {
-                match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => {
+                match (key.code, self.issue_list_widget.input_mode.clone()) {
+                    (KeyCode::Char('q') | KeyCode::Esc, InputMode::Normal) => {
                         self.should_quit = true;
                     }
-                    KeyCode::Tab | KeyCode::BackTab => {
+
+                    (KeyCode::Tab | KeyCode::BackTab, _) => {
                         self.issue_list_widget
                             .run(self.tab_widget.handle_event(event));
                     }
+                    (KeyCode::Char('/'), InputMode::Normal) => {
+                        self.issue_list_widget.toggle_search_mode();
+                    }
+                    (KeyCode::Esc, InputMode::Editing) => {
+                        self.issue_list_widget.toggle_search_mode();
+                    }
                     _ => {
                         self.selected_issue_widget.handle_event(event);
-                        if let LtEvent::SelectIssue = self.issue_list_widget.handle_event(event) {
-                            let issue_list_widget_state =
-                                self.issue_list_widget.state.write().unwrap();
-                            let selected_issue: Option<IssueFragment> = issue_list_widget_state
-                                .list_state
-                                .selected()
-                                .map(|index| {
-                                    issue_list_widget_state.issue_map[&self.issue_list_widget.selected_view_id][index].clone()
-                                });
-                            self.selected_issue_widget
-                                .set_selected_issue(selected_issue);
+                        match self.issue_list_widget.handle_event(event) {
+                            LtEvent::SelectIssue => {
+                                let issue_list_widget_state =
+                                    self.issue_list_widget.state.write().unwrap();
+                                let selected_issue: Option<IssueFragment> =
+                                    issue_list_widget_state.list_state.selected().map(|index| {
+                                        issue_list_widget_state.issue_map
+                                            [&issue_list_widget_state.selected_view_id][index]
+                                            .clone()
+                                    });
+                                self.selected_issue_widget
+                                    .set_selected_issue(selected_issue);
+                            }
+                            /*LtEvent::SearchIssues(term) => {
+                                self.issue_list_widget
+                                    .run(TabChangeEvent::SearchIssues(String::from(term)));
+                            }*/
+                            _ => (),
                         }
                     }
                 };
@@ -182,6 +206,7 @@ pub struct IssueFragment {
     from_type   to_type;
     [ custom_view_query::IssueFragment] [ IssueFragment ];
     [ my_issues_query::IssueFragment] [ IssueFragment ];
+    [ search_query::IssueFragment] [ IssueFragment ];
 )]
 impl From<from_type> for to_type {
     fn from(item: from_type) -> Self {
@@ -359,5 +384,3 @@ impl From<from_type> for to_type {
         }
     }
 }
-
-
