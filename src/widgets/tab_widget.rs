@@ -188,7 +188,7 @@ impl Widget for &TabWidget {
                     } else if tab.tab_type == TabType::SearchResults {
                         (iconmap::ico_to_nf("Magnify"), Color::Yellow.to_string())
                     } else {
-                        (iconmap::ico_to_nf("Home"), String::from("#FFFFFF"))
+                        (iconmap::ico_to_nf("Home"), Color::Blue.to_string())
                     };
                     let project_color = Color::from_str(&color).unwrap();
                     Span::from(format!("{} {}", icon, tab.title.clone().bold()))

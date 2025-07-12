@@ -65,7 +65,7 @@ impl SelectedIssueWidget {
     }
 }
 
-const DICT_HEADER: Style = Style::new().fg(SLATE.c100);
+const DICT_HEADER: Style = Style::new();
 
 fn header(text: &str) -> Line {
     Line::from(Span::from(text.to_owned() + ":\n")).style(DICT_HEADER)
@@ -189,7 +189,7 @@ impl Widget for &SelectedIssueWidget {
                 ),
             };
 
-        let created_at_title = Line::from(created_at).fg(SLATE.c100).right_aligned();
+        let created_at_title = Line::from(created_at).right_aligned();
 
         // collapse borders for nicer UI
         let collapsed_top_and_left_border_set = symbols::border::Set {

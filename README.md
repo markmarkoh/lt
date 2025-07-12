@@ -11,6 +11,7 @@
 * **New in 0.0.4**: View switcher (`Tab`/`Shift+Tab`) - switch between custom views as defined in your Linear app
 * **New in 0.0.6**: Now available to install view Homebrew (see **Installation**)
 * **New in 0.0.7**: Search issues (`/`) - search all issues by simple search term
+* **New in 0.0.9**: Much better color schemes for light and dark themed terminals
   
 ### Planned Features
 * Faster loading via cacheing

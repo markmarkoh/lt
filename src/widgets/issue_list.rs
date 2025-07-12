@@ -5,11 +5,8 @@ use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
     style::{
-        Color, Modifier, Style, Stylize,
-        palette::{
-            material::{AMBER, BLUE_GRAY},
-            tailwind::SLATE,
-        },
+        palette::
+            material::AMBER, Color, Modifier, Style, Stylize
     },
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Padding, Paragraph, StatefulWidget, Widget, Wrap},
@@ -271,7 +268,7 @@ impl MyIssuesWidget {
         LtEvent::None
     }
 }
-const SELECTED_STYLE: Style = Style::new().bg(SLATE.c100).fg(BLUE_GRAY.c900);
+const SELECTED_STYLE: Style = Style::new().fg(Color::Cyan).add_modifier(Modifier::BOLD).add_modifier(Modifier::ITALIC);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -329,8 +326,8 @@ impl Widget for &MyIssuesWidget {
                         priority_icon
                     );
                     text.extend([
-                        item.title.clone().white(),
-                        line.add_modifier(Modifier::BOLD).blue(),
+                        item.title.clone(),
+                        line.add_modifier(Modifier::BOLD).blue().to_string(),
                     ]);
                     ListItem::new(text)
                 })
