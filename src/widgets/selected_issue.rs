@@ -4,7 +4,6 @@ use crate::iconmap;
 
 use ratatui::style::Modifier;
 use ratatui::style::Style;
-use ratatui::style::palette::tailwind::SLATE;
 use ratatui::text::Text;
 use ratatui::widgets::Scrollbar;
 use ratatui::widgets::ScrollbarOrientation;
