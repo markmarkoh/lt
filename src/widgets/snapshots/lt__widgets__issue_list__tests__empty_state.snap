@@ -21,4 +21,4 @@ expression: terminal.backend()
 "│                                                          │"
 "│                                                          │"
 "│                                                          │"
-"└ <j>/<k> to select issue  ──  < / > to search ────────────┘"
+"└ <j/k> to select  ─  < / > to search ─────────────────────┘"

@@ -288,11 +288,11 @@ impl Widget for &MyIssuesWidget {
         };
 
         let mut block = Block::bordered().title_bottom(Line::from(vec![
-            Span::from(" <j>/<k> ").blue(),
-            Span::from("to select issue "),
-            Span::from(" ── "),
-            Span::from(" < / > ").blue(),
-            Span::from("to search "),
+            Span::from(" <j/k> ").blue(),
+            Span::from("to select "),
+            Span::from("─"),
+            Span::from(" <⁄> ").blue(),
+            Span::from("to search"),
         ]));
 
         if let LoadingState::Loading = self.get_loading_state() {
