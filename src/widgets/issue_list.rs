@@ -288,8 +288,11 @@ impl Widget for &MyIssuesWidget {
         };
 
         let mut block = Block::bordered().title_bottom(Line::from(vec![
-            Span::from(" <j/k> ").blue(),
+            Span::from(" <j>/<k> ").blue(),
             Span::from("to select issue "),
+            Span::from(" ── "),
+            Span::from(" < / > ").blue(),
+            Span::from("to search "),
         ]));
 
         if let LoadingState::Loading = self.get_loading_state() {
@@ -386,7 +389,7 @@ mod tests {
     #[test]
     fn test_empty_state() {
         let mut app = MyIssuesWidget::default();
-        let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(60, 20)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();
@@ -415,7 +418,7 @@ mod tests {
                 issue_map: HashMap::from([(String::from("my_issues"), issues)]),
             })),
         };
-        let mut terminal = Terminal::new(TestBackend::new(40, 20)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(60, 20)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();

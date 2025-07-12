@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_empty_state() {
         let app = TabWidget::default();
-        let mut terminal = Terminal::new(TestBackend::new(75, 2)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(100, 2)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();
@@ -283,7 +283,7 @@ mod tests {
             })),
         };
 
-        let mut terminal = Terminal::new(TestBackend::new(75, 2)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(125, 2)).unwrap();
         terminal
             .draw(|frame| frame.render_widget(&app, frame.area()))
             .unwrap();
@@ -344,5 +344,18 @@ mod tests {
 
         let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
         assert_eq!(ev, TabChangeEvent::FetchMyIssues);
+
+
+        app.show_and_select_search_tab();
+        terminal
+            .draw(|frame| frame.render_widget(&app, frame.area()))
+            .unwrap();
+
+        // make sure we've selected the last tab
+        assert_eq!(app.state.read().unwrap().selected_index, app.state.read().unwrap().tabs.len() - 1);
+        // make sure the search tab is there
+        assert_snapshot!(terminal.backend());
+
+
     }
 }
