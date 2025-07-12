@@ -1,6 +1,6 @@
 # `lt` (ell-tee)
-<img width="900" height="924" alt="Screenshot 2025-07-12 at 10 34 54 AM" src="https://github.com/user-attachments/assets/dd29d164-4ec8-4bb6-b469-667680b2d739" />
-<img width="900" height="924" alt="Screenshot 2025-07-12 at 10 36 31 AM" src="https://github.com/user-attachments/assets/62d426a3-fe34-4eb2-a44a-0e53da1e03e9" />
+<img width="900" alt="Basic intro page for lt" src="https://github.com/user-attachments/assets/dd29d164-4ec8-4bb6-b469-667680b2d739" />
+<img width="900" alt="Search results activated" src="https://github.com/user-attachments/assets/62d426a3-fe34-4eb2-a44a-0e53da1e03e9" />
 
 `lt` is a simple TUI application to view issues from [linear.app](https://linear.app/), for those of us still in love with the terminal. `lt` is read-only at the moment.
 
