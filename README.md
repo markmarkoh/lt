@@ -6,6 +6,8 @@
 <img width="900" alt="Search results activated" src="https://github.com/user-attachments/assets/62d426a3-fe34-4eb2-a44a-0e53da1e03e9" />
 <img width="900" alt="lt on a light themed terminal" src="https://github.com/user-attachments/assets/7a878054-5b99-4fce-8b4e-bcdb2e75f335" />
 
+[![Crate Status](https://img.shields.io/crates/v/lt.svg)](https://crates.io/crates/lt)
+
 ### Features
 * View "My Issues", and the issue description, project, priority, status, tags, assignee, creator  
 * Press `y` to yank (copy) the git branch name to the clipboard
