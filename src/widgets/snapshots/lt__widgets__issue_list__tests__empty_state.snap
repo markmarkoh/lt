@@ -3,7 +3,7 @@ source: src/widgets/issue_list.rs
 expression: terminal.backend()
 ---
 "┌──────────────────────────────────────────────────────────┐"
-"│                                                          │"
+"│No issues found                                           │"
 "│                                                          │"
 "│                                                          │"
 "│                                                          │"
