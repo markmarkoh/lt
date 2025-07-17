@@ -4,10 +4,7 @@ use crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
-    style::{
-        palette::
-            material::AMBER, Color, Modifier, Style, Stylize
-    },
+    style::{Color, Modifier, Style, Stylize, palette::material::AMBER},
     text::{Line, Span, Text},
     widgets::{Block, List, ListItem, ListState, Padding, Paragraph, StatefulWidget, Widget, Wrap},
 };
@@ -156,15 +153,15 @@ impl MyIssuesWidget {
 
     pub fn scroll_down(&self) {
         let mut state = self.state.write().unwrap();
-        if let (Some(index), Some(map)) = (
+
+        match (
             state.list_state.selected(),
             state.issue_map.get(&state.selected_view_id),
         ) {
-            if index >= map.len() - 1 {
-                return state.list_state.select_first();
-            }
+            (Some(index), Some(map)) if index >= map.len() - 1 => state.list_state.select_first(),
+            (_, Some(map)) if !map.is_empty() => state.list_state.select_next(),
+            _ => (),
         }
-        state.list_state.select_next()
     }
 
     pub fn scroll_up(&self) {
@@ -174,11 +171,12 @@ impl MyIssuesWidget {
             state.list_state.selected(),
             state.issue_map.get(&state.selected_view_id),
         ) {
-            (Some(0) | None, Some(map)) => {
+            (Some(0) | None, Some(map)) if !map.is_empty() => {
                 let max_index = map.len() - 1;
                 state.list_state.select(Some(max_index));
             }
-            _ => state.list_state.select_previous(),
+            (_, Some(map)) if !map.is_empty() => state.list_state.select_previous(),
+            _ => (),
         }
     }
 
@@ -268,11 +266,15 @@ impl MyIssuesWidget {
         LtEvent::None
     }
 }
-const SELECTED_STYLE: Style = Style::new().fg(Color::Cyan).add_modifier(Modifier::BOLD).add_modifier(Modifier::ITALIC);
+const SELECTED_STYLE: Style = Style::new()
+    .fg(Color::Cyan)
+    .add_modifier(Modifier::BOLD)
+    .add_modifier(Modifier::ITALIC);
 
 impl Widget for &MyIssuesWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         use Constraint::{Length, Min};
+        let mut loading = false;
 
         let (search_area, body_area): (Option<Rect>, Rect) = {
             if self.show_search_input {
@@ -294,6 +296,7 @@ impl Widget for &MyIssuesWidget {
 
         if let LoadingState::Loading = self.get_loading_state() {
             block = block.title(Line::from("Loading…").right_aligned());
+            loading = true;
         }
 
         if let LoadingState::Error(e) = self.get_loading_state() {
@@ -338,11 +341,17 @@ impl Widget for &MyIssuesWidget {
         // tests can't see the highlighting
         let highlight_symbol = if cfg!(test) { ">" } else { "" };
 
-        let list = List::new(rows)
-            .highlight_style(SELECTED_STYLE)
-            .highlight_symbol(highlight_symbol)
-            .block(block);
-        StatefulWidget::render(list, body_area, buf, &mut state.list_state);
+        if !rows.is_empty() || loading  {
+            let list = List::new(rows)
+                .highlight_style(SELECTED_STYLE)
+                .highlight_symbol(highlight_symbol)
+                .block(block);
+            StatefulWidget::render(list, body_area, buf, &mut state.list_state);
+        } else {
+            Paragraph::new("No issues found".red())
+                .block(block)
+                .render(body_area, buf);
+        }
 
         if let Some(search_area) = search_area {
             let block2 = Block::bordered().padding(Padding::ZERO);
