@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "lt"
-version = "0.0.10"
+version = "0.0.11"
 dependencies = [
  "chrono",
  "cli-clipboard",
