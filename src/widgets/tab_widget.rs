@@ -88,6 +88,8 @@ impl TabWidget {
         let mut state = self.state.write().unwrap();
         if state.selected_index < state.tabs.len() - 1 {
             state.selected_index += 1;
+        } else {
+            state.selected_index = 0;
         }
         state.selected_index
     }
@@ -96,6 +98,8 @@ impl TabWidget {
         let mut state = self.state.write().unwrap();
         if state.selected_index > 0 {
             state.selected_index -= 1;
+        } else {
+            state.selected_index = state.tabs.len() - 1
         }
         state.selected_index
     }
@@ -213,9 +217,7 @@ mod tests {
     use ratatui::{Terminal, backend::TestBackend};
 
     use crate::{
-        TabChangeEvent,
-        queries::custom_views_query,
-        widgets::{TabWidget, tab_widget::TabType},
+        queries::{custom_views_query, my_issues_query}, widgets::{tab_widget::TabType, TabWidget}, TabChangeEvent
     };
 
     use super::{Tab, TabWidgetState};
@@ -316,20 +318,15 @@ mod tests {
             })
         );
 
-        // but not passed b
+        // cycles to the first
         let ev = app.handle_event(&create_key_event(KeyCode::Tab));
         assert_eq!(
             ev,
-            TabChangeEvent::FetchCustomViewIssues(custom_views_query::ViewFragment {
-                name: "slugb".into(),
-                slug_id: Some("slugb".into()),
-                color: Some("#fa0faf".to_string()),
-                icon: Some("Education".to_string()),
-                id: String::from("slugb")
-            })
+            TabChangeEvent::FetchMyIssues
         );
 
-        // then back to a
+        // then back to a (twice to cycle back)
+        let _ = app.handle_event(&create_key_event(KeyCode::BackTab));
         let ev = app.handle_event(&create_key_event(KeyCode::BackTab));
         assert_eq!(
             ev,
