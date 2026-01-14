@@ -1130,15 +1130,18 @@ dependencies = [
 
 [[package]]
 name = "lt"
-version = "0.0.13"
+version = "0.0.14"
 dependencies = [
+ "ansi-to-tui",
  "chrono",
  "cli-clipboard",
  "color-eyre",
  "crossterm",
+ "darling",
  "duplicate",
  "graphql_client",
  "insta",
+ "instability",
  "open",
  "ratatui",
  "reqwest",
